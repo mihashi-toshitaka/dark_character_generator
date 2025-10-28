@@ -12,6 +12,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 public class DarkCharacterGeneratorFxApp extends Application {
@@ -31,10 +32,16 @@ public class DarkCharacterGeneratorFxApp extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/darkchar/ui/main-view.fxml"));
         loader.setControllerFactory(context::getBean);
         Parent root = loader.load();
-        Scene scene = new Scene(root);
+        var bounds = Screen.getPrimary().getVisualBounds();
+        double width = Math.min(960, bounds.getWidth() * 0.9);
+        double height = Math.min(720, bounds.getHeight() * 0.9);
+        Scene scene = new Scene(root, width, height);
         loadJapaneseFont(scene);
         // OSによっては文字化けするのでstage.setTitleは使わない
         // stage.setTitle("闇堕ちキャラクターメーカー");
+        stage.setMinWidth(640);
+        stage.setMinHeight(480);
+        stage.setMaxHeight(bounds.getHeight());
         stage.setScene(scene);
         stage.show();
     }
