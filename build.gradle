@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.5'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group = 'com.example'
+version = '0.1.0'
+description = 'Dark Character Generator Prototype'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation 'com.h2database:h2'
+    implementation 'org.openjfx:javafx-controls'
+    implementation 'org.openjfx:javafx-fxml'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+javafx {
+    version = '21.0.5'
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+tasks.named('bootJar') {
+    archiveFileName = 'dark-character-generator.jar'
+}
+
+tasks.named('jar') {
+    enabled = false
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.openjfx' && details.requested.name.startsWith('javafx-')) {
+            details.useVersion(javafx.version)
+        }
+    }
+}
+
