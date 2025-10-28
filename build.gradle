@@ -55,7 +55,7 @@ configurations.all {
 def downloadedFontsDir = file("${buildDir}/downloaded-fonts")
 
 tasks.register('downloadNotoSansJp', de.undercouch.gradle.tasks.download.Download) {
-    src 'https://github.com/googlefonts/noto-cjk/raw/refs/heads/main/Sans/OTF/Japanese/NotoSansJP-Regular.otf'
+    src 'https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/Japanese/NotoSansJP-Regular.otf'
     dest new File(downloadedFontsDir, 'NotoSansJP-Regular.otf')
     onlyIfNewer true
 }
