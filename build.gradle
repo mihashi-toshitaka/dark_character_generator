@@ -53,12 +53,11 @@ configurations.all {
 }
 
 def downloadedFontsDir = file("${buildDir}/downloaded-fonts")
-def notoSansCjkReleaseTag = 'Sans2.004'
-def japaneseLanguageSpecificZip = 'LanguageSpecificOTFsJapanese.zip'
-def notoSansRegularFileName = 'NotoSansJP-Regular.otf'
+def japaneseLanguageSpecificZip = 'NotoSansCJKjp-hinted.zip'
+def notoSansRegularFileName = 'NotoSansCJKjp-Regular.otf'
 
 tasks.register('downloadNotoSansJp', de.undercouch.gradle.tasks.download.Download) {
-    src "https://github.com/notofonts/noto-cjk/releases/download/${notoSansCjkReleaseTag}/${japaneseLanguageSpecificZip}"
+    src "https://noto-website-2.storage.googleapis.com/pkgs/${japaneseLanguageSpecificZip}"
     dest new File(downloadedFontsDir, japaneseLanguageSpecificZip)
     onlyIfNewer true
 }

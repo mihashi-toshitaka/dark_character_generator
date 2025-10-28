@@ -1,5 +1,7 @@
 * {
-    -fx-font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", "Meiryo", "MS Gothic", "TakaoGothic", "IPAexGothic", "Noto Sans CJK JP", "Noto Sans", sans-serif;
+    -fx-font-family: "Noto Sans CJK JP Regular", "Noto Sans CJK JP",
+                     "Yu Gothic", "Hiragino Sans", "Meiryo",
+                     "MS Gothic", "TakaoGothic", "IPAexGothic", sans-serif;
 }
 
 .label {
