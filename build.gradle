@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.2.5'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'de.undercouch.download' version '5.5.0'
 }
 
 group = 'com.example'
@@ -48,6 +49,22 @@ configurations.all {
         if (details.requested.group == 'org.openjfx' && details.requested.name.startsWith('javafx-')) {
             details.useVersion(javafx.version)
         }
+    }
+}
+
+def downloadedFontsDir = file("${buildDir}/downloaded-fonts")
+
+tasks.register('downloadNotoSansJp', de.undercouch.gradle.tasks.download.Download) {
+    src 'https://github.com/googlefonts/noto-cjk/raw/refs/heads/main/Sans/OTF/Japanese/NotoSansJP-Regular.otf'
+    dest new File(downloadedFontsDir, 'NotoSansJP-Regular.otf')
+    onlyIfNewer true
+}
+
+tasks.named('processResources') {
+    dependsOn 'downloadNotoSansJp'
+    from(downloadedFontsDir) {
+        include 'NotoSansJP-Regular.otf'
+        into 'fonts'
     }
 }
 

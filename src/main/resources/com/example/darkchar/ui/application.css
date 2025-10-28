@@ -1,0 +1,7 @@
+* {
+    -fx-font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", "Meiryo", "MS Gothic", "TakaoGothic", "IPAexGothic", "Noto Sans CJK JP", "Noto Sans", sans-serif;
+}
+
+.label {
+    -fx-font-smoothing-type: lcd;
+}
