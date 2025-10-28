@@ -19,7 +19,6 @@ replay_pid*
 
 # Generated wrappers cache
 .gradle/
-gradle/wrapper/gradle-wrapper.jar
 
 # Operating system files
 .DS_Store
