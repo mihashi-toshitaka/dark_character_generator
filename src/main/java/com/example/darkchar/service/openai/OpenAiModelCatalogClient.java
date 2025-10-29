@@ -3,6 +3,7 @@ package com.example.darkchar.service.openai;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,6 +24,19 @@ public class OpenAiModelCatalogClient {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenAiModelCatalogClient.class);
     private static final String BASE_URL = "https://api.openai.com/v1";
+    private static final Pattern GPT_PREFIX = Pattern.compile("^gpt-", Pattern.CASE_INSENSITIVE);
+    private static final Pattern O_SERIES_PREFIX = Pattern.compile("^o\\d+-", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DATE_SUFFIX = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
+    private static final Pattern SHORT_DATE_SUFFIX = Pattern.compile("-\\d{4}$");
+    private static final List<String> EXCLUDE_CONTAINS = List.of(
+            "embedding",
+            "image",
+            "audio",
+            "realtime",
+            "vision-preview",
+            "-preview",
+            "tts",
+            "whisper");
 
     private final RestClient restClient;
 
@@ -54,11 +68,9 @@ public class OpenAiModelCatalogClient {
                 throw new OpenAiIntegrationException("OpenAIモデル一覧を取得できませんでした。");
             }
 
-            List<String> models = response.data().stream()
+            List<String> models = filterAllowedModels(response.data().stream()
                     .map(ModelSummary::id)
-                    .filter(Objects::nonNull)
-                    .sorted(Comparator.naturalOrder())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()));
 
             logger.info("Retrieved {} models from OpenAI", models.size());
             return models;
@@ -77,5 +89,20 @@ public class OpenAiModelCatalogClient {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record ModelSummary(String id) {
+    }
+
+    List<String> filterAllowedModels(List<String> modelIds) {
+        return modelIds.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(modelId -> GPT_PREFIX.matcher(modelId).find() || O_SERIES_PREFIX.matcher(modelId).find())
+                .filter(modelId -> !DATE_SUFFIX.matcher(modelId).find())
+                .filter(modelId -> !SHORT_DATE_SUFFIX.matcher(modelId).find())
+                .filter(modelId -> {
+                    String normalized = modelId.toLowerCase();
+                    return EXCLUDE_CONTAINS.stream().noneMatch(normalized::contains);
+                })
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
     }
 }
