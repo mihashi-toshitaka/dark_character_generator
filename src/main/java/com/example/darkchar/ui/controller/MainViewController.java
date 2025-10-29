@@ -19,6 +19,7 @@ import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.WorldGenre;
 import com.example.darkchar.service.AttributeQueryService;
 import com.example.darkchar.service.CharacterGenerationService;
+import com.example.darkchar.service.GenerationResult;
 import com.example.darkchar.ui.AppStyleUtil;
 
 import javafx.collections.FXCollections;
@@ -38,8 +39,10 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
+import javafx.concurrent.Task;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.Cursor;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
@@ -86,12 +89,17 @@ public class MainViewController {
     @FXML
     private Button generateButton;
 
+    @FXML
+    private Button settingsButton;
+
     private final ToggleGroup modeToggleGroup = new ToggleGroup();
     private final Map<AttributeOption, CheckBox> traitCheckBoxes = new LinkedHashMap<>();
     private final Map<AttributeCategory, List<CheckBox>> darknessCheckBoxes = new EnumMap<>(AttributeCategory.class);
     private final ApplicationContext applicationContext;
     private Stage resultStage;
     private CharacterResultController resultController;
+    private Stage settingsStage;
+    private SettingsController settingsController;
 
     public MainViewController(AttributeQueryService attributeQueryService,
             CharacterGenerationService characterGenerationService,
@@ -236,12 +244,11 @@ public class MainViewController {
                     darknessSelections,
                     (int) Math.round(darknessSlider.getValue()));
 
-            GeneratedCharacter generatedCharacter = characterGenerationService.generate(input, selection);
-            showResultWindow(generatedCharacter);
+            runGenerationTask(input, selection);
         } catch (IllegalArgumentException ex) {
             showAlert(Alert.AlertType.WARNING, ex.getMessage());
         } catch (Exception ex) {
-            showAlert(Alert.AlertType.ERROR, "生成中にエラーが発生しました: " + ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "生成準備中にエラーが発生しました: " + ex.getMessage());
         }
     }
 
@@ -285,6 +292,108 @@ public class MainViewController {
             }
         } catch (Exception ex) {
             showAlert(Alert.AlertType.ERROR, "結果画面の表示中にエラーが発生しました: " + ex.getMessage());
+        }
+    }
+
+    private void runGenerationTask(CharacterInput input, DarknessSelection selection) {
+        Task<GenerationResult> task = new Task<>() {
+            @Override
+            protected GenerationResult call() {
+                return characterGenerationService.generate(input, selection);
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            generateButton.setDisable(false);
+            setSceneCursor(Cursor.DEFAULT);
+            GenerationResult result = task.getValue();
+            if (result != null) {
+                result.warningMessage().ifPresent(message -> showAlert(Alert.AlertType.WARNING, message));
+                showResultWindow(result.generatedCharacter());
+            }
+        });
+
+        task.setOnFailed(event -> {
+            generateButton.setDisable(false);
+            setSceneCursor(Cursor.DEFAULT);
+            Throwable ex = task.getException();
+            if (ex instanceof IllegalArgumentException iae) {
+                showAlert(Alert.AlertType.WARNING, iae.getMessage());
+            } else {
+                String message = ex == null ? "不明なエラーが発生しました。" : ex.getMessage();
+                showAlert(Alert.AlertType.ERROR, "生成中にエラーが発生しました: " + message);
+            }
+        });
+
+        task.setOnCancelled(event -> {
+            generateButton.setDisable(false);
+            setSceneCursor(Cursor.DEFAULT);
+        });
+
+        generateButton.setDisable(true);
+        setSceneCursor(Cursor.WAIT);
+
+        Thread thread = new Thread(task, "character-generation-task");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void setSceneCursor(Cursor cursor) {
+        if (generateButton != null && generateButton.getScene() != null) {
+            generateButton.getScene().setCursor(cursor);
+        }
+    }
+
+    @FXML
+    void handleOpenSettings(ActionEvent event) {
+        try {
+            if (settingsStage == null) {
+                FXMLLoader loader = new FXMLLoader(
+                        getClass().getResource("/com/example/darkchar/ui/settings-view.fxml"));
+                loader.setControllerFactory(applicationContext::getBean);
+                Parent root = loader.load();
+                settingsController = loader.getController();
+
+                Scene ownerScene = settingsButton.getScene();
+                Scene scene = new Scene(root);
+                if (ownerScene != null) {
+                    scene.getStylesheets().addAll(ownerScene.getStylesheets());
+                    String ownerStyle = ownerScene.getRoot().getStyle();
+                    if (ownerStyle != null && !ownerStyle.isBlank()) {
+                        scene.getRoot().setStyle(ownerStyle);
+                    }
+                }
+
+                settingsStage = new Stage();
+                if (ownerScene != null) {
+                    settingsStage.initOwner(ownerScene.getWindow());
+                }
+                settingsStage.initModality(Modality.WINDOW_MODAL);
+                settingsStage.setResizable(false);
+                settingsStage.setScene(scene);
+                settingsStage.setOnHidden(e -> {
+                    settingsStage = null;
+                    settingsController = null;
+                });
+                if (settingsController != null) {
+                    settingsController.setStage(settingsStage);
+                }
+            }
+
+            if (settingsController != null) {
+                settingsController.refreshFromStore();
+            }
+
+            if (settingsStage != null) {
+                if (!settingsStage.isShowing()) {
+                    settingsStage.show();
+                } else {
+                    settingsStage.toFront();
+                    settingsStage.requestFocus();
+                }
+            }
+        } catch (Exception ex) {
+            showAlert(Alert.AlertType.ERROR, "設定画面の表示中にエラーが発生しました: " + ex.getMessage());
         }
     }
 

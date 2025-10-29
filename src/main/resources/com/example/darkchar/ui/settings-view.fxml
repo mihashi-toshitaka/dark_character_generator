@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.darkchar.ui.controller.SettingsController"
+      spacing="12" alignment="CENTER_LEFT" prefWidth="420">
+    <padding>
+        <Insets top="16" right="18" bottom="16" left="18" />
+    </padding>
+    <Label text="OpenAI APIキー" style="-fx-font-size: 14px;" />
+    <PasswordField fx:id="apiKeyField" promptText="sk-..." prefWidth="360" />
+    <Label fx:id="statusLabel" text="APIキーは未設定です。" wrapText="true"
+           style="-fx-text-fill: -fx-text-base-color;" />
+    <Separator />
+    <HBox spacing="8" alignment="CENTER_RIGHT">
+        <Button text="クリア" onAction="#handleClear" />
+        <Pane HBox.hgrow="ALWAYS" />
+        <Button text="キャンセル" onAction="#handleCancel" cancelButton="true" />
+        <Button text="保存" onAction="#handleSave" defaultButton="true" />
+    </HBox>
+</VBox>

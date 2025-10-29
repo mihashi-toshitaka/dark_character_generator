@@ -1,25 +1,66 @@
 package com.example.darkchar.service;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.example.darkchar.domain.AttributeCategory;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
-import org.springframework.stereotype.Service;
+import com.example.darkchar.service.openai.OpenAiCharacterGenerationClient;
+import com.example.darkchar.service.openai.OpenAiIntegrationException;
 
 @Service
 public class CharacterGenerationService {
 
-    public GeneratedCharacter generate(CharacterInput input, DarknessSelection darknessSelection) {
+    private static final Logger logger = LoggerFactory.getLogger(CharacterGenerationService.class);
+
+    private final OpenAiApiKeyStore apiKeyStore;
+    private final OpenAiCharacterGenerationClient openAiClient;
+
+    public CharacterGenerationService(OpenAiApiKeyStore apiKeyStore,
+            OpenAiCharacterGenerationClient openAiClient) {
+        this.apiKeyStore = apiKeyStore;
+        this.openAiClient = openAiClient;
+    }
+
+    public GenerationResult generate(CharacterInput input, DarknessSelection darknessSelection) {
         validate(input, darknessSelection);
-        String narrative = buildNarrative(input, darknessSelection);
-        return new GeneratedCharacter(input, darknessSelection, narrative, Instant.now());
+
+        String narrative;
+        boolean usedOpenAi = false;
+        Optional<String> warning = Optional.empty();
+
+        Optional<String> apiKey = apiKeyStore.getApiKey();
+        if (apiKey.isPresent()) {
+            try {
+                narrative = openAiClient.generateNarrative(apiKey.get(), input, darknessSelection);
+                usedOpenAi = true;
+            } catch (OpenAiIntegrationException ex) {
+                logger.warn("OpenAI連携に失敗したためローカル生成へフォールバックします: {}", ex.getMessage());
+                narrative = buildNarrative(input, darknessSelection);
+                String detail = ex.getMessage();
+                String message = detail == null || detail.isBlank()
+                        ? "OpenAI連携に失敗したため、サンプル結果を表示しています。"
+                        : "OpenAI連携に失敗したため、サンプル結果を表示しています。詳細: " + detail;
+                warning = Optional.of(message);
+            }
+        } else {
+            narrative = buildNarrative(input, darknessSelection);
+        }
+
+        GeneratedCharacter character = new GeneratedCharacter(input, darknessSelection, narrative, Instant.now());
+        return new GenerationResult(character, usedOpenAi, warning);
     }
 
     private void validate(CharacterInput input, DarknessSelection darknessSelection) {
