@@ -18,6 +18,9 @@ import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -31,7 +34,10 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -71,19 +77,21 @@ public class MainViewController {
     private TextArea freeTextArea;
 
     @FXML
-    private TextArea resultArea;
-
-    @FXML
     private Button generateButton;
 
     private final ToggleGroup modeToggleGroup = new ToggleGroup();
     private final Map<AttributeOption, CheckBox> traitCheckBoxes = new LinkedHashMap<>();
     private final Map<AttributeCategory, List<CheckBox>> darknessCheckBoxes = new EnumMap<>(AttributeCategory.class);
+    private final ApplicationContext applicationContext;
+    private Stage resultStage;
+    private CharacterResultController resultController;
 
     public MainViewController(AttributeQueryService attributeQueryService,
-            CharacterGenerationService characterGenerationService) {
+            CharacterGenerationService characterGenerationService,
+            ApplicationContext applicationContext) {
         this.attributeQueryService = attributeQueryService;
         this.characterGenerationService = characterGenerationService;
+        this.applicationContext = applicationContext;
     }
 
     @FXML
@@ -215,11 +223,54 @@ public class MainViewController {
                     (int) Math.round(darknessSlider.getValue()));
 
             GeneratedCharacter generatedCharacter = characterGenerationService.generate(input, selection);
-            resultArea.setText(generatedCharacter.narrative());
+            showResultWindow(generatedCharacter);
         } catch (IllegalArgumentException ex) {
             showAlert(Alert.AlertType.WARNING, ex.getMessage());
         } catch (Exception ex) {
             showAlert(Alert.AlertType.ERROR, "生成中にエラーが発生しました: " + ex.getMessage());
+        }
+    }
+
+    private void showResultWindow(GeneratedCharacter generatedCharacter) {
+        try {
+            if (resultStage == null) {
+                FXMLLoader loader = new FXMLLoader(
+                        getClass().getResource("/com/example/darkchar/ui/character-result-view.fxml"));
+                loader.setControllerFactory(applicationContext::getBean);
+                Parent root = loader.load();
+                resultController = loader.getController();
+
+                Scene ownerScene = generateButton.getScene();
+                Scene scene = new Scene(root);
+                scene.getStylesheets().addAll(ownerScene.getStylesheets());
+                String ownerStyle = ownerScene.getRoot().getStyle();
+                if (ownerStyle != null && !ownerStyle.isBlank()) {
+                    scene.getRoot().setStyle(ownerStyle);
+                }
+
+                resultStage = new Stage();
+                resultStage.initOwner(ownerScene.getWindow());
+                resultStage.initModality(Modality.WINDOW_MODAL);
+                resultStage.setScene(scene);
+                resultStage.setOnHidden(event -> {
+                    resultStage = null;
+                    resultController = null;
+                });
+                resultController.setStage(resultStage);
+            }
+
+            if (resultController != null) {
+                resultController.setGeneratedCharacter(generatedCharacter);
+            }
+
+            if (resultStage != null && !resultStage.isShowing()) {
+                resultStage.show();
+            } else if (resultStage != null) {
+                resultStage.toFront();
+                resultStage.requestFocus();
+            }
+        } catch (Exception ex) {
+            showAlert(Alert.AlertType.ERROR, "結果画面の表示中にエラーが発生しました: " + ex.getMessage());
         }
     }
 
