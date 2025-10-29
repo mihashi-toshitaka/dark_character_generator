@@ -6,6 +6,7 @@ public record CharacterInput(
         InputMode mode,
         WorldGenre worldGenre,
         List<AttributeOption> characterTraits,
+        String traitFreeText,
         int protagonistScore,
-        String freeText) {
+        String darknessFreeText) {
 }

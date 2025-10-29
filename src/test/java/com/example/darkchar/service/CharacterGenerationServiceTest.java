@@ -23,6 +23,7 @@ class CharacterGenerationServiceTest {
                 InputMode.SEMI_AUTO,
                 new WorldGenre(1L, "中世ダークファンタジー"),
                 List.of(new AttributeOption(1L, AttributeCategory.CHARACTER_TRAIT, "勇敢な守護者", "勇敢さ")),
+                "盾となって仲間を守る", 
                 2,
                 "親友を救いたい");
 
@@ -40,5 +41,9 @@ class CharacterGenerationServiceTest {
         assertThat(result.narrative()).contains("復讐心");
         assertThat(result.narrative()).contains("白髪化");
         assertThat(result.narrative()).contains("闇堕ち度: 4/5");
+        assertThat(result.narrative()).contains("■キャラクター属性メモ");
+        assertThat(result.narrative()).contains("盾となって仲間を守る");
+        assertThat(result.narrative()).contains("■闇堕ちメモ");
+        assertThat(result.narrative()).contains("親友を救いたい");
     }
 }

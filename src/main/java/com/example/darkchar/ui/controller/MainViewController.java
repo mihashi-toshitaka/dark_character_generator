@@ -63,6 +63,9 @@ public class MainViewController {
     private FlowPane characterTraitContainer;
 
     @FXML
+    private TextArea traitFreeTextArea;
+
+    @FXML
     private VBox darknessCategoryContainer;
 
     @FXML
@@ -189,12 +192,16 @@ public class MainViewController {
     private void updateMode() {
         boolean semiAuto = semiAutoModeButton.isSelected();
         characterTraitContainer.setDisable(!semiAuto);
+        traitFreeTextArea.setDisable(!semiAuto);
         traitCheckBoxes.values().forEach(checkBox -> {
             checkBox.setDisable(!semiAuto);
             if (!semiAuto) {
                 checkBox.setSelected(false);
             }
         });
+        if (!semiAuto) {
+            traitFreeTextArea.clear();
+        }
     }
 
     @FXML
@@ -221,6 +228,7 @@ public class MainViewController {
                     mode,
                     worldGenre,
                     selectedTraits,
+                    traitFreeTextArea.getText(),
                     (int) Math.round(protagonistSlider.getValue()),
                     freeTextArea.getText());
 

@@ -49,6 +49,11 @@ public class CharacterGenerationService {
             builder.append('\n');
         }
 
+        if (input.traitFreeText() != null && !input.traitFreeText().isBlank()) {
+            builder.append("■キャラクター属性メモ\n");
+            builder.append(input.traitFreeText().trim()).append("\n\n");
+        }
+
         builder.append("■闇堕ちカテゴリ\n");
         for (Map.Entry<AttributeCategory, List<AttributeOption>> entry : darknessSelection.selections().entrySet()) {
             if (entry.getValue().isEmpty()) {
@@ -62,9 +67,9 @@ public class CharacterGenerationService {
         builder.append('\n');
         builder.append("闇堕ち度: ").append(darknessSelection.darknessLevel()).append("/5\n\n");
 
-        if (input.freeText() != null && !input.freeText().isBlank()) {
-            builder.append("■追加メモ\n");
-            builder.append(input.freeText().trim()).append("\n\n");
+        if (input.darknessFreeText() != null && !input.darknessFreeText().isBlank()) {
+            builder.append("■闇堕ちメモ\n");
+            builder.append(input.darknessFreeText().trim()).append("\n\n");
         }
 
         builder.append("■生成ストーリー\n");
