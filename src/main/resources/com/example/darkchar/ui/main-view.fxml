@@ -46,10 +46,6 @@
                         <TextArea fx:id="freeTextArea" prefRowCount="3" wrapText="true" />
                     </VBox>
                     <Button fx:id="generateButton" text="闇堕ちキャラクターを生成" onAction="#handleGenerate" />
-                    <VBox spacing="6">
-                        <Label text="生成結果" />
-                        <TextArea fx:id="resultArea" editable="false" wrapText="true" prefRowCount="10" />
-                    </VBox>
                 </VBox>
             </content>
         </ScrollPane>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.darkchar.ui.controller.CharacterResultController">
+    <top>
+        <Label text="生成されたキャラクター" BorderPane.alignment="CENTER"
+               style="-fx-font-size: 18px; -fx-padding: 16;" />
+    </top>
+    <center>
+        <VBox spacing="10" style="-fx-padding: 16;">
+            <Label text="闇堕ちストーリー" />
+            <TextArea fx:id="resultTextArea" editable="false" wrapText="true" prefRowCount="12"
+                      VBox.vgrow="ALWAYS" />
+        </VBox>
+    </center>
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" spacing="8" BorderPane.alignment="CENTER">
+            <children>
+                <Button text="閉じる" onAction="#handleClose" />
+            </children>
+            <padding>
+                <Insets top="0" right="16" bottom="16" left="16" />
+            </padding>
+        </HBox>
+    </bottom>
+</BorderPane>
