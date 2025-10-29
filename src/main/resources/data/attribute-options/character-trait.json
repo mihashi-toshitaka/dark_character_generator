@@ -1,0 +1,42 @@
+[
+  {
+    "category": "CHARACTER_TRAIT",
+    "name": "勇敢な守護者",
+    "description": "仲間を守るために危険へ飛び込む勇敢さ"
+  },
+  {
+    "category": "CHARACTER_TRAIT",
+    "name": "冷静な戦略家",
+    "description": "状況を分析し最善手を導く冷静さ"
+  },
+  {
+    "category": "CHARACTER_TRAIT",
+    "name": "純真な理想主義者",
+    "description": "世界を善くしたいという純粋な願い"
+  },
+  {
+    "category": "CHARACTER_TRAIT",
+    "name": "高潔な騎士",
+    "description": "騎士道精神を重んじる生真面目さ"
+  },
+  {
+    "category": "CHARACTER_TRAIT",
+    "name": "天才的魔導士",
+    "description": "知識と魔術を武器にする頭脳派"
+  },
+  {
+    "category": "CHARACTER_TRAIT",
+    "name": "情熱的アーティスト",
+    "description": "感情を爆発させる表現者"
+  },
+  {
+    "category": "CHARACTER_TRAIT",
+    "name": "孤高の剣士",
+    "description": "己の腕だけを信じる孤独な戦士"
+  },
+  {
+    "category": "CHARACTER_TRAIT",
+    "name": "無垢な癒やし手",
+    "description": "誰かを癒やすことに喜びを見出す存在"
+  }
+]
