@@ -42,59 +42,110 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
         if (normalizedModel == null || normalizedModel.isEmpty()) {
             throw new OpenAiIntegrationException("OpenAIリクエストに使用するモデルが選択されていません。");
         }
-
-        try {
+        // 最初は temperature を付けて試行し、APIが未対応の場合は temperature を外して1回だけ再試行する。
+    String responseText = null;
+        boolean triedWithoutTemperature = false;
+        for (int attempt = 0; attempt < 2; attempt++) {
+            boolean includeTemperature = (attempt == 0);
+            if (!includeTemperature) {
+                triedWithoutTemperature = true;
+            }
             logger.info("Calling OpenAI responses API: model={}, temperature={}, maxOutputTokens={}",
-                    normalizedModel, 0.8, 600);
-            OpenAiResponse response = restClient.post()
-                    .uri("/responses")
-                    .headers(headers -> {
-                        headers.setBearerAuth(apiKey);
-                        headers.setContentType(MediaType.APPLICATION_JSON);
-                    })
-                    .body(buildRequest(normalizedModel, input, selection))
-                    .retrieve()
-                    .body(OpenAiResponse.class);
-
-            if (response != null) {
-                logger.info("Received OpenAI response: id={}, created={}, model={}, usage={}",
-                        response.id(),
-                        response.created(),
-                        response.model(),
-                        formatUsage(response.usage()));
-            }
-
-            String text = extractText(response);
-            if (text == null || text.isBlank()) {
-                throw new OpenAiIntegrationException("OpenAIレスポンスからテキストを取得できませんでした。");
-            }
-            return text.trim();
-        } catch (RestClientResponseException ex) {
-            logger.warn("OpenAI responses API call failed: status={} {}, model={}", ex.getRawStatusCode(),
-                    ex.getStatusText(), normalizedModel);
-            // 追加: レスポンスボディにAPI側の詳細エラーが含まれていることが多いのでログ出力しておく
+                    normalizedModel, includeTemperature ? 0.8 : "(omitted)", 600);
             try {
-                String resp = ex.getResponseBodyAsString();
-                if (resp != null && !resp.isBlank()) {
-                    logger.warn("OpenAI responses API error body: {}", resp);
+                var requestBody = buildRequestMap(normalizedModel, input, selection, includeTemperature);
+                // まず生のJSON文字列を取得しておく（APIのレスポンス構造が変わることがあるため柔軟に対応する）
+                String raw = restClient.post()
+                        .uri("/responses")
+                        .headers(headers -> {
+                            headers.setBearerAuth(apiKey);
+                            headers.setContentType(MediaType.APPLICATION_JSON);
+                        })
+                        .body(requestBody)
+                        .retrieve()
+                        .body(String.class);
+
+                // ログ（必要なら管理者が確認できるように）
+                logger.debug("OpenAI raw response: {}", raw);
+
+                // JSON をパースしてテキストを抽出する（柔軟に探索）
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(raw);
+
+                    // 可能なら既存の型にマッピングして usage 等をログ出力
+                    try {
+                        OpenAiResponse mapped = mapper.treeToValue(root, OpenAiResponse.class);
+                        if (mapped != null) {
+                            logger.info("Received OpenAI response: id={}, created={}, model={}, usage={}",
+                                    mapped.id(), mapped.created(), mapped.model(), formatUsage(mapped.usage()));
+                        }
+                    } catch (Exception e) {
+                        // 型マッピングに失敗しても問題ない
+                    }
+
+                    String extracted = extractTextFromJson(root);
+                    if (extracted != null && !extracted.isBlank()) {
+                        responseText = extracted;
+                        // 正常終了すればループを抜ける
+                        break;
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to parse OpenAI response JSON: {}", e.getMessage());
+                    throw new OpenAiIntegrationException("OpenAIレスポンスの解析に失敗しました。", e);
                 }
-            } catch (Exception e) {
-                // 無理に取得できなくても続行
+            } catch (RestClientResponseException ex) {
+        logger.warn("OpenAI responses API call failed: status={} {}, model={}", ex.getStatusCode().value(),
+            ex.getStatusText(), normalizedModel);
+                String respBody = null;
+                try {
+                    respBody = ex.getResponseBodyAsString();
+                    if (respBody != null && !respBody.isBlank()) {
+                        logger.warn("OpenAI responses API error body: {}", respBody);
+                    }
+                } catch (Exception e) {
+                    // 無理に取得できなくても続行
+                }
+
+                // temperature が未サポートという明示的なエラーなら、次のループで temperature を外して再試行する
+                if (!triedWithoutTemperature && respBody != null
+                        && respBody.contains("'temperature' is not supported")) {
+                    logger.info("Model {} does not support temperature; retrying without temperature.", normalizedModel);
+                    continue; // 次のattemptで includeTemperature=false にする
+                }
+
+                String message = "OpenAI API呼び出しに失敗しました: HTTP %d %s".formatted(ex.getStatusCode().value(), ex.getStatusText());
+                throw new OpenAiIntegrationException(message, ex);
+            } catch (RestClientException ex) {
+                logger.warn("OpenAI responses API request encountered an error for model {}: {}", normalizedModel,
+                        ex.getMessage());
+                throw new OpenAiIntegrationException("OpenAI APIへのリクエスト中にエラーが発生しました。", ex);
             }
-            String message = "OpenAI API呼び出しに失敗しました: HTTP %d %s".formatted(ex.getRawStatusCode(), ex.getStatusText());
-            throw new OpenAiIntegrationException(message, ex);
-        } catch (RestClientException ex) {
-            logger.warn("OpenAI responses API request encountered an error for model {}: {}", normalizedModel,
-                    ex.getMessage());
-            throw new OpenAiIntegrationException("OpenAI APIへのリクエスト中にエラーが発生しました。", ex);
         }
+
+        if (responseText != null && !responseText.isBlank()) {
+            return responseText.trim();
+        }
+
+        throw new OpenAiIntegrationException("OpenAIレスポンスからテキストを取得できませんでした。");
     }
 
-    private OpenAiRequest buildRequest(String modelId, CharacterInput input, DarknessSelection selection) {
+    /**
+     * リクエストボディを Map として組み立てる。temperature を省略可能にするため Map を返す。
+     */
+    private Map<String, Object> buildRequestMap(String modelId, CharacterInput input, DarknessSelection selection,
+            boolean includeTemperature) {
         String prompt = buildPrompt(input, selection);
-        OpenAiContent content = new OpenAiContent("input_text", prompt);
-        OpenAiMessage message = new OpenAiMessage("user", List.of(content));
-        return new OpenAiRequest(modelId, List.of(message), 0.8, 600);
+        Map<String, String> content = Map.of("type", "input_text", "text", prompt);
+        Map<String, Object> message = Map.of("role", "user", "content", List.of(content));
+        Map<String, Object> req = new java.util.LinkedHashMap<>();
+        req.put("model", modelId);
+        req.put("input", List.of(message));
+        if (includeTemperature) {
+            req.put("temperature", 0.8);
+        }
+        req.put("max_output_tokens", 600);
+        return req;
     }
 
     private String buildPrompt(CharacterInput input, DarknessSelection selection) {
@@ -178,6 +229,62 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
             }
         }
         return builder.toString();
+    }
+
+    /**
+     * JsonNode から柔軟にテキストを抽出する。Responses API の出力構造は変わることがあるため、
+     * output -> content の各ノードを再帰的に探索して text フィールドを収集する。
+     */
+    private String extractTextFromJson(com.fasterxml.jackson.databind.JsonNode root) {
+        if (root == null) {
+            return null;
+        }
+        var sb = new StringBuilder();
+        var outputs = root.path("output");
+        if (outputs.isMissingNode() || !outputs.isArray()) {
+            // まれに top-level に直接 text がある場合も探す
+            collectTextNodes(root, sb);
+            return sb.length() == 0 ? null : sb.toString();
+        }
+        for (var out : outputs) {
+            if (out == null || out.isMissingNode())
+                continue;
+            var contents = out.path("content");
+            if (contents != null && contents.isArray()) {
+                for (var c : contents) {
+                    collectTextNodes(c, sb);
+                }
+            } else {
+                collectTextNodes(out, sb);
+            }
+        }
+        return sb.length() == 0 ? null : sb.toString();
+    }
+
+    private void collectTextNodes(com.fasterxml.jackson.databind.JsonNode node, StringBuilder sb) {
+        if (node == null || node.isMissingNode())
+            return;
+        if (node.has("text") && node.get("text").isTextual()) {
+            sb.append(node.get("text").asText());
+            return;
+        }
+        if (node.isTextual()) {
+            sb.append(node.asText());
+            return;
+        }
+        if (node.isObject()) {
+            var it = node.fields();
+            while (it.hasNext()) {
+                var e = it.next();
+                collectTextNodes(e.getValue(), sb);
+            }
+            return;
+        }
+        if (node.isArray()) {
+            for (var el : node) {
+                collectTextNodes(el, sb);
+            }
+        }
     }
 
     private String formatUsage(OpenAiUsage usage) {
