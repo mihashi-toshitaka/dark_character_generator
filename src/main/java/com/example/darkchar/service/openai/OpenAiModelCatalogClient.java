@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -23,15 +24,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class OpenAiModelCatalogClient {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenAiModelCatalogClient.class);
-    private static final String BASE_URL = "https://api.openai.com/v1";
     private static final Pattern GPT_PREFIX = Pattern.compile("^gpt-", Pattern.CASE_INSENSITIVE);
     private static final Pattern O_SERIES_PREFIX = Pattern.compile("^o\\d+-", Pattern.CASE_INSENSITIVE);
     private static final Pattern DATE_SUFFIX = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
 
     private final RestClient restClient;
 
-    public OpenAiModelCatalogClient(RestClient.Builder builder) {
-        this.restClient = builder.baseUrl(BASE_URL).build();
+    public OpenAiModelCatalogClient(@Qualifier("openAiRestClientBuilder") RestClient.Builder builder) {
+        this.restClient = builder.build();
     }
 
     /**

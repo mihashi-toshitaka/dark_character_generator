@@ -7,6 +7,7 @@ import java.util.StringJoiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -29,11 +30,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGenerationClient {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenAiCharacterGenerationRestClient.class);
-    private static final String BASE_URL = "https://api.openai.com/v1";
     private final RestClient restClient;
 
-    public OpenAiCharacterGenerationRestClient(RestClient.Builder builder) {
-        this.restClient = builder.baseUrl(BASE_URL).build();
+    public OpenAiCharacterGenerationRestClient(@Qualifier("openAiRestClientBuilder") RestClient.Builder builder) {
+        this.restClient = builder.build();
     }
 
     @Override
