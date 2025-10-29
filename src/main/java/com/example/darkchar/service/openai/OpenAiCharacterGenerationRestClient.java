@@ -72,6 +72,15 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
         } catch (RestClientResponseException ex) {
             logger.warn("OpenAI responses API call failed: status={} {}, model={}", ex.getRawStatusCode(),
                     ex.getStatusText(), normalizedModel);
+            // 追加: レスポンスボディにAPI側の詳細エラーが含まれていることが多いのでログ出力しておく
+            try {
+                String resp = ex.getResponseBodyAsString();
+                if (resp != null && !resp.isBlank()) {
+                    logger.warn("OpenAI responses API error body: {}", resp);
+                }
+            } catch (Exception e) {
+                // 無理に取得できなくても続行
+            }
             String message = "OpenAI API呼び出しに失敗しました: HTTP %d %s".formatted(ex.getRawStatusCode(), ex.getStatusText());
             throw new OpenAiIntegrationException(message, ex);
         } catch (RestClientException ex) {
