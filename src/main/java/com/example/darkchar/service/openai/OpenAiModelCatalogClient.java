@@ -27,16 +27,6 @@ public class OpenAiModelCatalogClient {
     private static final Pattern GPT_PREFIX = Pattern.compile("^gpt-", Pattern.CASE_INSENSITIVE);
     private static final Pattern O_SERIES_PREFIX = Pattern.compile("^o\\d+-", Pattern.CASE_INSENSITIVE);
     private static final Pattern DATE_SUFFIX = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
-    private static final Pattern SHORT_DATE_SUFFIX = Pattern.compile("-\\d{4}$");
-    private static final List<String> EXCLUDE_CONTAINS = List.of(
-            "embedding",
-            "image",
-            "audio",
-            "realtime",
-            "vision-preview",
-            "-preview",
-            "tts",
-            "whisper");
 
     private final RestClient restClient;
 
@@ -97,11 +87,6 @@ public class OpenAiModelCatalogClient {
                 .map(String::trim)
                 .filter(modelId -> GPT_PREFIX.matcher(modelId).find() || O_SERIES_PREFIX.matcher(modelId).find())
                 .filter(modelId -> !DATE_SUFFIX.matcher(modelId).find())
-                .filter(modelId -> !SHORT_DATE_SUFFIX.matcher(modelId).find())
-                .filter(modelId -> {
-                    String normalized = modelId.toLowerCase();
-                    return EXCLUDE_CONTAINS.stream().noneMatch(normalized::contains);
-                })
                 .sorted(Comparator.naturalOrder())
                 .collect(Collectors.toList());
     }

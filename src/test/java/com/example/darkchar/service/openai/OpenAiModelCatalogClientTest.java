@@ -53,25 +53,4 @@ class OpenAiModelCatalogClientTest {
 
         assertThat(filtered).containsExactly("o3-mini");
     }
-
-    @Test
-    void filterAllowedModelsRemovesShortDateSuffixEntries() {
-        List<String> filtered = client.filterAllowedModels(List.of(
-                "gpt-4o-0601",
-                "o1-mini-1231",
-                "gpt-4o"));
-
-        assertThat(filtered).containsExactly("gpt-4o");
-    }
-
-    @Test
-    void filterAllowedModelsRemovesExcludedKeywords() {
-        List<String> filtered = client.filterAllowedModels(List.of(
-                "gpt-4o-vision-preview",
-                "gpt-4o-audio",
-                "o1-realtime",
-                "gpt-4o-mini"));
-
-        assertThat(filtered).containsExactly("gpt-4o-mini");
-    }
 }
