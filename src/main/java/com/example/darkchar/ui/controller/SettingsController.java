@@ -10,6 +10,7 @@ import com.example.darkchar.service.OpenAiApiKeyStore;
 import com.example.darkchar.service.OpenAiModelStore;
 import com.example.darkchar.service.openai.OpenAiIntegrationException;
 import com.example.darkchar.service.openai.OpenAiModelCatalogClient;
+import com.example.darkchar.ui.AppStyleUtil;
 
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
@@ -119,14 +120,15 @@ public class SettingsController {
 
     @FXML
     void handleLoadModels(ActionEvent event) {
-        String key = apiKeyField.getText();
-        if (key != null) {
-            key = key.trim();
+        String inputKey = apiKeyField.getText();
+        if (inputKey != null) {
+            inputKey = inputKey.trim();
         }
-        if (key == null || key.isEmpty()) {
+        if (inputKey == null || inputKey.isEmpty()) {
             showWarning("APIキーを入力してください。");
             return;
         }
+        final String key = inputKey;
 
         if (loadModelsButton != null) {
             loadModelsButton.setDisable(true);
@@ -222,10 +224,12 @@ public class SettingsController {
 
     private void showWarning(String message) {
         Alert alert = new Alert(AlertType.WARNING);
-        alert.setTitle("OpenAIモデル取得エラー");
+        // alert.setTitle("OpenAIモデル取得エラー");
         alert.setHeaderText(null);
         String content = (message == null || message.isBlank()) ? "モデル一覧の取得に失敗しました。" : message;
         alert.setContentText(content);
+        // アプリ共通の stylesheet / フォント設定をAlertに適用
+        AppStyleUtil.applyToAlert(alert);
         alert.showAndWait();
     }
 }
