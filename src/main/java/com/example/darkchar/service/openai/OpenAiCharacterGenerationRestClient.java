@@ -30,8 +30,6 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
 
     private static final Logger logger = LoggerFactory.getLogger(OpenAiCharacterGenerationRestClient.class);
     private static final String BASE_URL = "https://api.openai.com/v1";
-    private static final String MODEL = "gpt-4o-mini";
-
     private final RestClient restClient;
 
     public OpenAiCharacterGenerationRestClient(RestClient.Builder builder) {
@@ -39,18 +37,32 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
     }
 
     @Override
-    public String generateNarrative(String apiKey, CharacterInput input, DarknessSelection selection) {
+    public String generateNarrative(String apiKey, String modelId, CharacterInput input, DarknessSelection selection) {
+        String normalizedModel = modelId == null ? null : modelId.trim();
+        if (normalizedModel == null || normalizedModel.isEmpty()) {
+            throw new OpenAiIntegrationException("OpenAIリクエストに使用するモデルが選択されていません。");
+        }
+
         try {
-            logger.debug("Calling OpenAI responses API with model {}", MODEL);
+            logger.info("Calling OpenAI responses API: model={}, temperature={}, maxOutputTokens={}",
+                    normalizedModel, 0.8, 600);
             OpenAiResponse response = restClient.post()
                     .uri("/responses")
                     .headers(headers -> {
                         headers.setBearerAuth(apiKey);
                         headers.setContentType(MediaType.APPLICATION_JSON);
                     })
-                    .body(buildRequest(input, selection))
+                    .body(buildRequest(normalizedModel, input, selection))
                     .retrieve()
                     .body(OpenAiResponse.class);
+
+            if (response != null) {
+                logger.info("Received OpenAI response: id={}, created={}, model={}, usage={}",
+                        response.id(),
+                        response.created(),
+                        response.model(),
+                        formatUsage(response.usage()));
+            }
 
             String text = extractText(response);
             if (text == null || text.isBlank()) {
@@ -58,18 +70,22 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
             }
             return text.trim();
         } catch (RestClientResponseException ex) {
+            logger.warn("OpenAI responses API call failed: status={} {}, model={}", ex.getRawStatusCode(),
+                    ex.getStatusText(), normalizedModel);
             String message = "OpenAI API呼び出しに失敗しました: HTTP %d %s".formatted(ex.getRawStatusCode(), ex.getStatusText());
             throw new OpenAiIntegrationException(message, ex);
         } catch (RestClientException ex) {
+            logger.warn("OpenAI responses API request encountered an error for model {}: {}", normalizedModel,
+                    ex.getMessage());
             throw new OpenAiIntegrationException("OpenAI APIへのリクエスト中にエラーが発生しました。", ex);
         }
     }
 
-    private OpenAiRequest buildRequest(CharacterInput input, DarknessSelection selection) {
+    private OpenAiRequest buildRequest(String modelId, CharacterInput input, DarknessSelection selection) {
         String prompt = buildPrompt(input, selection);
         OpenAiContent content = new OpenAiContent("input_text", prompt);
         OpenAiMessage message = new OpenAiMessage("user", List.of(content));
-        return new OpenAiRequest(MODEL, List.of(message), 0.8, 600);
+        return new OpenAiRequest(modelId, List.of(message), 0.8, 600);
     }
 
     private String buildPrompt(CharacterInput input, DarknessSelection selection) {
@@ -155,6 +171,16 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
         return builder.toString();
     }
 
+    private String formatUsage(OpenAiUsage usage) {
+        if (usage == null) {
+            return "usage=unknown";
+        }
+        return "prompt=%s, completion=%s, total=%s".formatted(
+                usage.promptTokens() == null ? "?" : usage.promptTokens(),
+                usage.completionTokens() == null ? "?" : usage.completionTokens(),
+                usage.totalTokens() == null ? "?" : usage.totalTokens());
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record OpenAiRequest(
             String model,
@@ -172,7 +198,12 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record OpenAiResponse(List<OpenAiOutput> output) {
+    private record OpenAiResponse(
+            String id,
+            String model,
+            Long created,
+            OpenAiUsage usage,
+            List<OpenAiOutput> output) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -181,5 +212,12 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record OpenAiResponseContent(String type, String text) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OpenAiUsage(
+            @JsonProperty("input_tokens") Integer promptTokens,
+            @JsonProperty("output_tokens") Integer completionTokens,
+            @JsonProperty("total_tokens") Integer totalTokens) {
     }
 }

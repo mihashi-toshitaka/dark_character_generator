@@ -9,19 +9,24 @@ import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.WorldGenre;
-import com.example.darkchar.service.GenerationResult;
-import com.example.darkchar.service.OpenAiApiKeyStore;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class CharacterGenerationServiceTest {
 
     private final OpenAiApiKeyStore keyStore = new OpenAiApiKeyStore();
-    private final CharacterGenerationService service = new CharacterGenerationService(keyStore,
-            (apiKey, input, selection) -> {
-                throw new AssertionError("OpenAI client should not be invoked in this test");
-            });
+    private final OpenAiModelStore modelStore = new OpenAiModelStore();
+    private CharacterGenerationService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new CharacterGenerationService(keyStore, modelStore,
+                (apiKey, modelId, input, selection) -> {
+                    throw new AssertionError("OpenAI client should not be invoked in this test");
+                });
+    }
 
     @Test
     void generateShouldBuildNarrative() {
@@ -29,7 +34,7 @@ class CharacterGenerationServiceTest {
                 InputMode.SEMI_AUTO,
                 new WorldGenre(1L, "中世ダークファンタジー"),
                 List.of(new AttributeOption(1L, AttributeCategory.CHARACTER_TRAIT, "勇敢な守護者", "勇敢さ")),
-                "盾となって仲間を守る", 
+                "盾となって仲間を守る",
                 2,
                 "親友を救いたい");
 

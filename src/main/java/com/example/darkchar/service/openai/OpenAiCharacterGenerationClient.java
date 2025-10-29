@@ -17,5 +17,5 @@ public interface OpenAiCharacterGenerationClient {
      * @return 生成されたテキスト
      * @throws OpenAiIntegrationException OpenAI連携に失敗した場合
      */
-    String generateNarrative(String apiKey, CharacterInput input, DarknessSelection selection);
+    String generateNarrative(String apiKey, String modelId, CharacterInput input, DarknessSelection selection);
 }

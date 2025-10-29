@@ -26,11 +26,14 @@ public class CharacterGenerationService {
     private static final Logger logger = LoggerFactory.getLogger(CharacterGenerationService.class);
 
     private final OpenAiApiKeyStore apiKeyStore;
+    private final OpenAiModelStore modelStore;
     private final OpenAiCharacterGenerationClient openAiClient;
 
     public CharacterGenerationService(OpenAiApiKeyStore apiKeyStore,
+            OpenAiModelStore modelStore,
             OpenAiCharacterGenerationClient openAiClient) {
         this.apiKeyStore = apiKeyStore;
+        this.modelStore = modelStore;
         this.openAiClient = openAiClient;
     }
 
@@ -43,8 +46,15 @@ public class CharacterGenerationService {
 
         Optional<String> apiKey = apiKeyStore.getApiKey();
         if (apiKey.isPresent()) {
+            Optional<String> modelId = modelStore.getSelectedModel();
+            if (modelId.isEmpty()) {
+                logger.warn("OpenAIモデルが選択されていないためローカル生成へフォールバックします。");
+                narrative = buildNarrative(input, darknessSelection);
+                warning = Optional.of("OpenAIモデルが選択されていないため、サンプル結果を表示しています。");
+                return buildResult(input, darknessSelection, narrative, usedOpenAi, warning);
+            }
             try {
-                narrative = openAiClient.generateNarrative(apiKey.get(), input, darknessSelection);
+                narrative = openAiClient.generateNarrative(apiKey.get(), modelId.get(), input, darknessSelection);
                 usedOpenAi = true;
             } catch (OpenAiIntegrationException ex) {
                 logger.warn("OpenAI連携に失敗したためローカル生成へフォールバックします: {}", ex.getMessage());
@@ -59,6 +69,11 @@ public class CharacterGenerationService {
             narrative = buildNarrative(input, darknessSelection);
         }
 
+        return buildResult(input, darknessSelection, narrative, usedOpenAi, warning);
+    }
+
+    private GenerationResult buildResult(CharacterInput input, DarknessSelection darknessSelection, String narrative,
+            boolean usedOpenAi, Optional<String> warning) {
         GeneratedCharacter character = new GeneratedCharacter(input, darknessSelection, narrative, Instant.now());
         return new GenerationResult(character, usedOpenAi, warning);
     }
