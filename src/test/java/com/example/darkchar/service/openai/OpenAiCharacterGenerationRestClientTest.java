@@ -1,6 +1,7 @@
 package com.example.darkchar.service.openai;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
@@ -97,7 +98,10 @@ class OpenAiCharacterGenerationRestClientTest {
         String errorBody = """
                 {
                   \"error\": {
-                    \"message\": \"'temperature' is not supported\"
+                    \"type\": \"invalid_request_error\",
+                    \"code\": \"temperature_not_supported\",
+                    \"message\": \"'temperature' is not supported for this model.\",
+                    \"param\": \"temperature\"
                   }
                 }
                 """;
@@ -135,6 +139,37 @@ class OpenAiCharacterGenerationRestClientTest {
         String actual = client.generateNarrative("test-key", "gpt-test", input, selection);
 
         assertThat(actual).isEqualTo("最初の行。\n次の行。");
+        mockServer.verify();
+    }
+
+    @Test
+    void generateNarrativeDoesNotRetryForUnrelatedError() {
+        CharacterInput input = createCharacterInput();
+        DarknessSelection selection = createDarknessSelection();
+
+        String errorBody = """
+                {
+                  \"error\": {
+                    \"type\": \"invalid_request_error\",
+                    \"code\": \"bad_request\",
+                    \"message\": \"The provided prompt is invalid.\"
+                  }
+                }
+                """;
+
+        mockServer.expect(ExpectedCount.once(), requestTo(BASE_URL + "/responses"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer test-key"))
+                .andExpect(jsonPath("$.temperature").value(0.8))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(errorBody));
+
+        assertThatThrownBy(() -> client.generateNarrative("test-key", "gpt-test", input, selection))
+                .isInstanceOf(OpenAiIntegrationException.class)
+                .hasMessageContaining("HTTP 400")
+                .hasMessageContaining("bad_request");
+
         mockServer.verify();
     }
 

@@ -1,9 +1,12 @@
 package com.example.darkchar.service.openai;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +35,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGenerationClient {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenAiCharacterGenerationRestClient.class);
+    private static final Set<String> TEMPERATURE_UNSUPPORTED_ERROR_CODES = Set.of(
+            "temperature_not_supported",
+            "model_capabilities.temperature_not_supported");
+    private static final Set<String> TEMPERATURE_UNSUPPORTED_NORMALIZED_MESSAGES = Set
+            .of("'temperature' is not supported for this model.",
+                    "'temperature' is not supported by this model.",
+                    "this model does not support the parameter `temperature`.",
+                    "the parameter `temperature` is not supported by this model.")
+            .stream()
+            .map(OpenAiCharacterGenerationRestClient::normalizeMessageIndicator)
+            .collect(Collectors.toUnmodifiableSet());
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
 
@@ -79,26 +93,41 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
                     }
                 }
             } catch (RestClientResponseException ex) {
-                logger.warn("OpenAI responses API call failed: status={} {}, model={}", ex.getStatusCode().value(),
-                        ex.getStatusText(), normalizedModel);
                 String respBody = null;
+                OpenAiErrorResponse errorResponse = null;
                 try {
                     respBody = ex.getResponseBodyAsString();
-                    if (respBody != null && !respBody.isBlank()) {
-                        logger.warn("OpenAI responses API error body: {}", respBody);
-                    }
+                    errorResponse = parseErrorResponse(objectMapper, respBody);
                 } catch (Exception e) {
                     // 無理に取得できなくても続行
                 }
 
+                OpenAiError errorDetails = errorResponse == null ? null : errorResponse.error();
+                logger.warn(
+                        "OpenAI responses API call failed: status={} {}, model={}, errorType={}, errorCode={}, errorMessage={}",
+                        ex.getStatusCode().value(), ex.getStatusText(), normalizedModel,
+                        safeValue(errorDetails == null ? null : errorDetails.type()),
+                        safeValue(errorDetails == null ? null : errorDetails.code()),
+                        safeValue(errorDetails == null ? null : errorDetails.message()));
+                if (respBody != null && !respBody.isBlank() && logger.isDebugEnabled()) {
+                    logger.debug("OpenAI responses API raw error body: {}", respBody);
+                }
+
                 // temperature が未サポートという明示的なエラーなら、次のループで temperature を外して再試行する
-                if (!triedWithoutTemperature && respBody != null
-                        && respBody.contains("'temperature' is not supported")) {
-                    logger.info("Model {} does not support temperature; retrying without temperature.", normalizedModel);
+                if (!triedWithoutTemperature && isTemperatureUnsupported(errorResponse)) {
+                    logger.info(
+                            "Model {} does not support temperature; retrying without temperature. errorContext={}",
+                            normalizedModel, formatErrorSummary(errorResponse));
                     continue; // 次のattemptで includeTemperature=false にする
                 }
 
-                String message = "OpenAI API呼び出しに失敗しました: HTTP %d %s".formatted(ex.getStatusCode().value(), ex.getStatusText());
+                String message = "OpenAI API呼び出しに失敗しました: HTTP %d %s".formatted(ex.getStatusCode().value(),
+                        ex.getStatusText());
+                if (errorDetails != null) {
+                    message += " (errorType=%s, errorCode=%s, errorMessage=%s)".formatted(
+                            safeValue(errorDetails.type()), safeValue(errorDetails.code()),
+                            safeValue(errorDetails.message()));
+                }
                 throw new OpenAiIntegrationException(message, ex);
             } catch (RestClientException ex) {
                 logger.warn("OpenAI responses API request encountered an error for model {}: {}", normalizedModel,
@@ -231,6 +260,62 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
         }
     }
 
+    static OpenAiErrorResponse parseErrorResponse(ObjectMapper mapper, String responseBody) {
+        if (mapper == null || responseBody == null || responseBody.isBlank()) {
+            return null;
+        }
+        try {
+            return mapper.readValue(responseBody, OpenAiErrorResponse.class);
+        } catch (JsonProcessingException e) {
+            logger.debug("Failed to deserialize OpenAI error response: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    static boolean isTemperatureUnsupported(OpenAiErrorResponse errorResponse) {
+        if (errorResponse == null || errorResponse.error() == null) {
+            return false;
+        }
+        OpenAiError error = errorResponse.error();
+        String code = normalizeIdentifier(error.code());
+        if (code != null && TEMPERATURE_UNSUPPORTED_ERROR_CODES.contains(code)) {
+            return true;
+        }
+        String normalizedMessage = normalizeMessageIndicator(error.message());
+        return normalizedMessage != null && TEMPERATURE_UNSUPPORTED_NORMALIZED_MESSAGES.contains(normalizedMessage);
+    }
+
+    private static String normalizeIdentifier(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    static String normalizeMessageIndicator(String message) {
+        if (message == null || message.isBlank()) {
+            return null;
+        }
+        String normalized = message.trim().toLowerCase(Locale.ROOT);
+        return normalized.replaceAll("\\s+", " ");
+    }
+
+    private static String safeValue(String value) {
+        return value == null || value.isBlank() ? "n/a" : value;
+    }
+
+    private static String formatErrorSummary(OpenAiErrorResponse errorResponse) {
+        if (errorResponse == null || errorResponse.error() == null) {
+            return "type=n/a, code=n/a, message=n/a, param=n/a";
+        }
+        OpenAiError error = errorResponse.error();
+        return "type=%s, code=%s, message=%s, param=%s".formatted(
+                safeValue(error.type()),
+                safeValue(error.code()),
+                safeValue(error.message()),
+                safeValue(error.param()));
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record OpenAiResponse(
             String id,
@@ -253,5 +338,17 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
             @JsonProperty("input_tokens") Integer promptTokens,
             @JsonProperty("output_tokens") Integer completionTokens,
             @JsonProperty("total_tokens") Integer totalTokens) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static record OpenAiErrorResponse(OpenAiError error) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static record OpenAiError(
+            String type,
+            String code,
+            String message,
+            String param) {
     }
 }
