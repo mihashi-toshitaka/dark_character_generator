@@ -23,7 +23,11 @@
                     </HBox>
                     <TitledPane text="キャラクター属性（セミオート専用）" collapsible="false">
                         <content>
-                            <FlowPane fx:id="characterTraitContainer" hgap="10" vgap="8" prefWrapLength="480" />
+                            <VBox spacing="8">
+                                <FlowPane fx:id="characterTraitContainer" hgap="10" vgap="8" prefWrapLength="480" />
+                                <TextArea fx:id="traitFreeTextArea" prefRowCount="2" wrapText="true"
+                                          promptText="キャラクター属性の補足" />
+                            </VBox>
                         </content>
                     </TitledPane>
                     <HBox spacing="12" alignment="CENTER_LEFT">
@@ -42,7 +46,7 @@
                         <Label fx:id="darknessValueLabel" text="3" />
                     </HBox>
                     <VBox spacing="6">
-                        <Label text="自由入力" />
+                        <Label text="闇堕ちメモ" />
                         <TextArea fx:id="freeTextArea" prefRowCount="3" wrapText="true" />
                     </VBox>
                     <Button fx:id="generateButton" text="闇堕ちキャラクターを生成" onAction="#handleGenerate" />
