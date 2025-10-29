@@ -1,5 +1,15 @@
 package com.example.darkchar.ui.controller;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
 import com.example.darkchar.domain.AttributeCategory;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
@@ -9,12 +19,8 @@ import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.WorldGenre;
 import com.example.darkchar.service.AttributeQueryService;
 import com.example.darkchar.service.CharacterGenerationService;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.example.darkchar.ui.AppStyleUtil;
+
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -37,8 +43,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 
 @Component
 public class MainViewController {
@@ -108,7 +112,8 @@ public class MainViewController {
         protagonistSlider.setSnapToTicks(true);
         protagonistSlider.setValue(3);
         protagonistValueLabel.setText(Integer.toString((int) protagonistSlider.getValue()));
-        protagonistSlider.valueProperty().addListener((obs, oldVal, newVal) -> protagonistValueLabel.setText(Integer.toString(newVal.intValue())));
+        protagonistSlider.valueProperty().addListener(
+                (obs, oldVal, newVal) -> protagonistValueLabel.setText(Integer.toString(newVal.intValue())));
 
         darknessSlider.setMin(1);
         darknessSlider.setMax(5);
@@ -117,7 +122,8 @@ public class MainViewController {
         darknessSlider.setSnapToTicks(true);
         darknessSlider.setValue(3);
         darknessValueLabel.setText(Integer.toString((int) darknessSlider.getValue()));
-        darknessSlider.valueProperty().addListener((obs, oldVal, newVal) -> darknessValueLabel.setText(Integer.toString(newVal.intValue())));
+        darknessSlider.valueProperty()
+                .addListener((obs, oldVal, newVal) -> darknessValueLabel.setText(Integer.toString(newVal.intValue())));
 
         worldGenreComboBox.setItems(FXCollections.observableArrayList(attributeQueryService.loadWorldGenres()));
         worldGenreComboBox.setConverter(new StringConverter<>() {
@@ -276,7 +282,21 @@ public class MainViewController {
 
     private void showAlert(Alert.AlertType type, String message) {
         Alert alert = new Alert(type);
-        alert.setTitle("メッセージ");
+        // オーナーを設定してダイアログ表示を安定させる
+        try {
+            if (generateButton != null && generateButton.getScene() != null) {
+                Stage owner = (Stage) generateButton.getScene().getWindow();
+                alert.initOwner(owner);
+                alert.initModality(Modality.WINDOW_MODAL);
+            }
+        } catch (Exception e) {
+            // 何か取れなければ無視して続行
+        }
+
+        // アプリ共通の stylesheet / font-family を適用
+        AppStyleUtil.applyToAlert(alert);
+        // OSによっては文字化けするのでalert.setTitleは使わない
+        // alert.setTitle("メッセージ");
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();

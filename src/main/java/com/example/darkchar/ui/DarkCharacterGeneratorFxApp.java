@@ -82,6 +82,11 @@ public class DarkCharacterGeneratorFxApp extends Application {
                     "-fx-font-family: '%s','Noto Sans JP','Yu Gothic UI','Meiryo',sans-serif;", chosenFamily);
             scene.getRoot().setStyle(css);
             logger.info("Applied UI font-family: {}", css);
+            // 一元化のため、AppStyleUtil に stylesheet とファミリ名を保存
+            if (stylesheetUrl != null) {
+                AppStyleUtil.setUiStylesheetUrl(stylesheetUrl.toExternalForm());
+            }
+            AppStyleUtil.setFontFamily(chosenFamily);
         } else {
             logger.warn("No Japanese font loaded from resources; UI text may show tofu glyphs.");
         }
