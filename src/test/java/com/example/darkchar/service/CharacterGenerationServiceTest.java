@@ -9,13 +9,19 @@ import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.WorldGenre;
+import com.example.darkchar.service.GenerationResult;
+import com.example.darkchar.service.OpenAiApiKeyStore;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class CharacterGenerationServiceTest {
 
-    private final CharacterGenerationService service = new CharacterGenerationService();
+    private final OpenAiApiKeyStore keyStore = new OpenAiApiKeyStore();
+    private final CharacterGenerationService service = new CharacterGenerationService(keyStore,
+            (apiKey, input, selection) -> {
+                throw new AssertionError("OpenAI client should not be invoked in this test");
+            });
 
     @Test
     void generateShouldBuildNarrative() {
@@ -35,15 +41,18 @@ class CharacterGenerationServiceTest {
 
         DarknessSelection selection = new DarknessSelection(darkness, 4);
 
-        GeneratedCharacter result = service.generate(input, selection);
+        GenerationResult result = service.generate(input, selection);
+        GeneratedCharacter character = result.generatedCharacter();
 
-        assertThat(result.narrative()).contains("中世ダークファンタジー");
-        assertThat(result.narrative()).contains("復讐心");
-        assertThat(result.narrative()).contains("白髪化");
-        assertThat(result.narrative()).contains("闇堕ち度: 4/5");
-        assertThat(result.narrative()).contains("■キャラクター属性メモ");
-        assertThat(result.narrative()).contains("盾となって仲間を守る");
-        assertThat(result.narrative()).contains("■闇堕ちメモ");
-        assertThat(result.narrative()).contains("親友を救いたい");
+        assertThat(result.usedOpenAi()).isFalse();
+        assertThat(result.warningMessage()).isEmpty();
+        assertThat(character.narrative()).contains("中世ダークファンタジー");
+        assertThat(character.narrative()).contains("復讐心");
+        assertThat(character.narrative()).contains("白髪化");
+        assertThat(character.narrative()).contains("闇堕ち度: 4/5");
+        assertThat(character.narrative()).contains("■キャラクター属性メモ");
+        assertThat(character.narrative()).contains("盾となって仲間を守る");
+        assertThat(character.narrative()).contains("■闇堕ちメモ");
+        assertThat(character.narrative()).contains("親友を救いたい");
     }
 }
