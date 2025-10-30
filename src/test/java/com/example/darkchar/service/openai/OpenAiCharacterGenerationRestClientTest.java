@@ -91,6 +91,45 @@ class OpenAiCharacterGenerationRestClientTest {
     }
 
     @Test
+    void generateNarrativeFlattensNestedMessageContent() {
+        CharacterInput input = createCharacterInput();
+        DarknessSelection selection = createDarknessSelection();
+
+        String responseJson = """
+                {
+                  \"id\": \"resp-789\",
+                  \"model\": \"gpt-5o\",
+                  \"created\": 1710000002,
+                  \"output\": [
+                    {
+                      \"content\": [
+                        {
+                          \"type\": \"message\",
+                          \"role\": \"assistant\",
+                          \"content\": [
+                            {\"type\": \"text\", \"text\": {\"value\": \"第一章。\\n\"}},
+                            {\"type\": \"text\", \"text\": {\"value\": \"第二章。\"}}
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+
+        mockServer.expect(ExpectedCount.once(), requestTo(BASE_URL + "/responses"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer test-key"))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON));
+
+        String actual = client.generateNarrative("test-key", "gpt-5o", input, selection);
+
+        assertThat(actual).isEqualTo("第一章。\n第二章。");
+        mockServer.verify();
+    }
+
+    @Test
     void generateNarrativeRetriesWithoutTemperatureWhenUnsupported() {
         CharacterInput input = createCharacterInput();
         DarknessSelection selection = createDarknessSelection();

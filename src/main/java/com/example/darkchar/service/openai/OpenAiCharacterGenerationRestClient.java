@@ -3,7 +3,6 @@ package com.example.darkchar.service.openai;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
@@ -26,6 +25,7 @@ import com.example.darkchar.domain.InputMode;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -221,21 +221,28 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
         }
         StringBuilder builder = new StringBuilder();
         for (OpenAiOutput output : response.output()) {
-            if (output == null || output.content() == null) {
+            if (output == null) {
                 continue;
             }
-            for (OpenAiResponseContent content : output.content()) {
-                if (content == null) {
-                    continue;
-                }
-                if (Objects.equals(content.type(), "output_text") || Objects.equals(content.type(), "text")) {
-                    if (content.text() != null) {
-                        builder.append(content.text());
-                    }
-                }
-            }
+            appendContentRecursive(builder, output.content());
         }
         return builder.toString();
+    }
+
+    private void appendContentRecursive(StringBuilder builder, List<OpenAiResponseContent> contents) {
+        if (contents == null || contents.isEmpty()) {
+            return;
+        }
+        for (OpenAiResponseContent content : contents) {
+            if (content == null) {
+                continue;
+            }
+            String textValue = content.textValue();
+            if (textValue != null && !textValue.isBlank()) {
+                builder.append(textValue);
+            }
+            appendContentRecursive(builder, content.content());
+        }
     }
 
     private String formatUsage(OpenAiUsage usage) {
@@ -339,7 +346,26 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record OpenAiResponseContent(String type, String text) {
+    private record OpenAiResponseContent(
+            String type,
+            @JsonProperty("text") JsonNode text,
+            List<OpenAiResponseContent> content) {
+
+        String textValue() {
+            if (text == null) {
+                return null;
+            }
+            if (text.isTextual()) {
+                return text.asText();
+            }
+            if (text.isObject()) {
+                JsonNode valueNode = text.get("value");
+                if (valueNode != null && valueNode.isTextual()) {
+                    return valueNode.asText();
+                }
+            }
+            return null;
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
