@@ -20,6 +20,8 @@ import com.example.darkchar.domain.WorldGenre;
 import com.example.darkchar.service.AttributeQueryService;
 import com.example.darkchar.service.CharacterGenerationService;
 import com.example.darkchar.service.GenerationResult;
+import com.example.darkchar.service.ai.AiProviderContextStore;
+import com.example.darkchar.service.ai.ProviderType;
 import com.example.darkchar.ui.AppStyleUtil;
 
 import javafx.collections.FXCollections;
@@ -52,6 +54,7 @@ public class MainViewController {
 
     private final AttributeQueryService attributeQueryService;
     private final CharacterGenerationService characterGenerationService;
+    private final AiProviderContextStore providerContextStore;
 
     @FXML
     private RadioButton autoModeButton;
@@ -103,9 +106,11 @@ public class MainViewController {
 
     public MainViewController(AttributeQueryService attributeQueryService,
             CharacterGenerationService characterGenerationService,
+            AiProviderContextStore providerContextStore,
             ApplicationContext applicationContext) {
         this.attributeQueryService = attributeQueryService;
         this.characterGenerationService = characterGenerationService;
+        this.providerContextStore = providerContextStore;
         this.applicationContext = applicationContext;
     }
 
@@ -296,10 +301,11 @@ public class MainViewController {
     }
 
     private void runGenerationTask(CharacterInput input, DarknessSelection selection) {
+        ProviderType providerType = providerContextStore.getActiveProviderType();
         Task<GenerationResult> task = new Task<>() {
             @Override
             protected GenerationResult call() {
-                return characterGenerationService.generate(input, selection);
+                return characterGenerationService.generate(input, selection, providerType);
             }
         };
 
