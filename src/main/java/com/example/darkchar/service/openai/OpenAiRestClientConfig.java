@@ -2,7 +2,9 @@ package com.example.darkchar.service.openai;
 
 import java.time.Duration;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -27,10 +29,13 @@ public class OpenAiRestClientConfig {
 
     @Bean
     @Qualifier("openAiRestClientBuilder")
-    RestClient.Builder openAiRestClientBuilder(RestClient.Builder builder,
-            @Qualifier("openAiClientHttpRequestFactory") ClientHttpRequestFactory requestFactory) {
-        return builder.clone()
+    RestClient.Builder openAiRestClientBuilder(
+            @Qualifier("openAiClientHttpRequestFactory") ClientHttpRequestFactory requestFactory,
+            ObjectProvider<RestClientCustomizer> customizers) {
+        RestClient.Builder builder = RestClient.builder()
                 .baseUrl(BASE_URL)
                 .requestFactory(requestFactory);
+        customizers.orderedStream().forEach(customizer -> customizer.customize(builder));
+        return builder;
     }
 }
