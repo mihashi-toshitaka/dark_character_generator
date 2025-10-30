@@ -7,7 +7,7 @@ import com.example.darkchar.domain.GeneratedCharacter;
 /**
  * キャラクター生成結果と付随情報を保持するレコード。
  */
-public record GenerationResult(GeneratedCharacter generatedCharacter, boolean usedOpenAi, Optional<String> warningMessage) {
+public record GenerationResult(GeneratedCharacter generatedCharacter, boolean usedProvider, Optional<String> warningMessage) {
 
     public GenerationResult {
         if (generatedCharacter == null) {
@@ -16,7 +16,7 @@ public record GenerationResult(GeneratedCharacter generatedCharacter, boolean us
         warningMessage = warningMessage == null ? Optional.empty() : warningMessage;
     }
 
-    public GenerationResult(GeneratedCharacter generatedCharacter, boolean usedOpenAi, String warningMessage) {
-        this(generatedCharacter, usedOpenAi, Optional.ofNullable(warningMessage));
+    public GenerationResult(GeneratedCharacter generatedCharacter, boolean usedProvider, String warningMessage) {
+        this(generatedCharacter, usedProvider, Optional.ofNullable(warningMessage));
     }
 }

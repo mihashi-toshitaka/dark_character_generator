@@ -17,7 +17,12 @@ import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
-import com.example.darkchar.service.openai.OpenAiCharacterGenerationClient;
+import com.example.darkchar.service.ai.AiProviderContext;
+import com.example.darkchar.service.ai.AiProviderContextStore;
+import com.example.darkchar.service.ai.CharacterGenerationProvider;
+import com.example.darkchar.service.ai.CharacterGenerationStrategyRegistry;
+import com.example.darkchar.service.ai.ProviderConfigurationStatus;
+import com.example.darkchar.service.ai.ProviderType;
 import com.example.darkchar.service.openai.OpenAiIntegrationException;
 
 @Service
@@ -25,57 +30,66 @@ public class CharacterGenerationService {
 
     private static final Logger logger = LoggerFactory.getLogger(CharacterGenerationService.class);
 
-    private final OpenAiApiKeyStore apiKeyStore;
-    private final OpenAiModelStore modelStore;
-    private final OpenAiCharacterGenerationClient openAiClient;
+    private final AiProviderContextStore providerContextStore;
+    private final CharacterGenerationStrategyRegistry strategyRegistry;
 
-    public CharacterGenerationService(OpenAiApiKeyStore apiKeyStore,
-            OpenAiModelStore modelStore,
-            OpenAiCharacterGenerationClient openAiClient) {
-        this.apiKeyStore = apiKeyStore;
-        this.modelStore = modelStore;
-        this.openAiClient = openAiClient;
+    public CharacterGenerationService(AiProviderContextStore providerContextStore,
+            CharacterGenerationStrategyRegistry strategyRegistry) {
+        this.providerContextStore = providerContextStore;
+        this.strategyRegistry = strategyRegistry;
     }
 
     public GenerationResult generate(CharacterInput input, DarknessSelection darknessSelection) {
+        return generate(input, darknessSelection, providerContextStore.getActiveProviderType());
+    }
+
+    public GenerationResult generate(CharacterInput input, DarknessSelection darknessSelection, ProviderType providerType) {
         validate(input, darknessSelection);
 
+        ProviderType effectiveType = providerType == null ? providerContextStore.getActiveProviderType() : providerType;
+        Optional<CharacterGenerationProvider> providerOptional = strategyRegistry.findProvider(effectiveType);
+        AiProviderContext context = providerContextStore.getContext(effectiveType);
+
         String narrative;
-        boolean usedOpenAi = false;
+        boolean usedProvider = false;
         Optional<String> warning = Optional.empty();
 
-        Optional<String> apiKey = apiKeyStore.getApiKey();
-        if (apiKey.isPresent()) {
-            Optional<String> modelId = modelStore.getSelectedModel();
-            if (modelId.isEmpty()) {
-                logger.warn("OpenAIモデルが選択されていないためローカル生成へフォールバックします。");
+        if (providerOptional.isPresent()) {
+            CharacterGenerationProvider provider = providerOptional.get();
+            ProviderConfigurationStatus status = provider.assessConfiguration(context);
+            if (!status.ready()) {
+                logger.warn("{}が未設定のためローカル生成へフォールバックします。", provider.getDisplayName());
+                if (status.warningMessage().isPresent()) {
+                    warning = status.warningMessage();
+                }
                 narrative = buildNarrative(input, darknessSelection);
-                warning = Optional.of("OpenAIモデルが選択されていないため、サンプル結果を表示しています。");
-                return buildResult(input, darknessSelection, narrative, usedOpenAi, warning);
-            }
-            try {
-                narrative = openAiClient.generateNarrative(apiKey.get(), modelId.get(), input, darknessSelection);
-                usedOpenAi = true;
-            } catch (OpenAiIntegrationException ex) {
-                logger.warn("OpenAI連携に失敗したためローカル生成へフォールバックします: {}", ex.getMessage());
-                narrative = buildNarrative(input, darknessSelection);
-                String detail = ex.getMessage();
-                String message = detail == null || detail.isBlank()
-                        ? "OpenAI連携に失敗したため、サンプル結果を表示しています。"
-                        : "OpenAI連携に失敗したため、サンプル結果を表示しています。詳細: " + detail;
-                warning = Optional.of(message);
+            } else {
+                try {
+                    narrative = provider.generateNarrative(context, input, darknessSelection);
+                    usedProvider = true;
+                } catch (OpenAiIntegrationException ex) {
+                    logger.warn("{}連携に失敗したためローカル生成へフォールバックします: {}", provider.getDisplayName(),
+                            ex.getMessage());
+                    narrative = buildNarrative(input, darknessSelection);
+                    warning = Optional.of(provider.buildFailureWarning(ex));
+                } catch (RuntimeException ex) {
+                    logger.warn("{}連携に失敗したためローカル生成へフォールバックします: {}", provider.getDisplayName(),
+                            ex.getMessage());
+                    narrative = buildNarrative(input, darknessSelection);
+                    warning = Optional.of(provider.buildFailureWarning(ex));
+                }
             }
         } else {
             narrative = buildNarrative(input, darknessSelection);
         }
 
-        return buildResult(input, darknessSelection, narrative, usedOpenAi, warning);
+        return buildResult(input, darknessSelection, narrative, usedProvider, warning);
     }
 
     private GenerationResult buildResult(CharacterInput input, DarknessSelection darknessSelection, String narrative,
-            boolean usedOpenAi, Optional<String> warning) {
+            boolean usedProvider, Optional<String> warning) {
         GeneratedCharacter character = new GeneratedCharacter(input, darknessSelection, narrative, Instant.now());
-        return new GenerationResult(character, usedOpenAi, warning);
+        return new GenerationResult(character, usedProvider, warning);
     }
 
     private void validate(CharacterInput input, DarknessSelection darknessSelection) {

@@ -9,7 +9,11 @@
     <padding>
         <Insets top="16" right="18" bottom="16" left="18" />
     </padding>
-    <Label text="OpenAI APIキー" style="-fx-font-size: 14px;" />
+    <HBox spacing="8" alignment="CENTER_LEFT">
+        <Label text="AIプロバイダ" />
+        <ComboBox fx:id="providerComboBox" prefWidth="200" />
+    </HBox>
+    <Label text="APIキー" style="-fx-font-size: 14px;" />
     <PasswordField fx:id="apiKeyField" promptText="sk-..." prefWidth="360" />
     <HBox spacing="8" alignment="CENTER_LEFT">
         <Button fx:id="loadModelsButton" text="モデル一覧を取得" onAction="#handleLoadModels" />
