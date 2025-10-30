@@ -282,7 +282,16 @@ public class OpenAiCharacterGenerationRestClient implements OpenAiCharacterGener
             return true;
         }
         String normalizedMessage = normalizeMessageIndicator(error.message());
-        return normalizedMessage != null && TEMPERATURE_UNSUPPORTED_NORMALIZED_MESSAGES.contains(normalizedMessage);
+        if (normalizedMessage != null && TEMPERATURE_UNSUPPORTED_NORMALIZED_MESSAGES.contains(normalizedMessage)) {
+            return true;
+        }
+
+        String param = normalizeIdentifier(error.param());
+        return param != null
+                && param.equals("temperature")
+                && normalizedMessage != null
+                && normalizedMessage.contains("temperature")
+                && normalizedMessage.contains("not supported");
     }
 
     private static String normalizeIdentifier(String value) {

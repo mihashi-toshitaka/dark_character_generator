@@ -99,8 +99,8 @@ class OpenAiCharacterGenerationRestClientTest {
                 {
                   \"error\": {
                     \"type\": \"invalid_request_error\",
-                    \"code\": \"temperature_not_supported\",
-                    \"message\": \"'temperature' is not supported for this model.\",
+                    \"code\": null,
+                    \"message\": \"Unsupported parameter: 'temperature' is not supported with this model.\",
                     \"param\": \"temperature\"
                   }
                 }
