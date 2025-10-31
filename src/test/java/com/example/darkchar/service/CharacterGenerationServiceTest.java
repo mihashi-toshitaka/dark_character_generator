@@ -51,7 +51,7 @@ class CharacterGenerationServiceTest {
         assertThat(character.narrative()).contains("中世ダークファンタジー");
         assertThat(character.narrative()).contains("復讐心");
         assertThat(character.narrative()).contains("白髪化");
-        assertThat(character.narrative()).contains("闇堕ち度: 4/5");
+        assertThat(character.narrative()).contains("闇堕ち度: 40%");
     }
 
     @Test
@@ -105,7 +105,7 @@ class CharacterGenerationServiceTest {
                 List.of(new AttributeOption(10L, AttributeCategory.MOTIVE, "復讐心", "復讐")),
                 AttributeCategory.APPEARANCE,
                 List.of(new AttributeOption(20L, AttributeCategory.APPEARANCE, "白髪化", "白髪化")));
-        return new DarknessSelection(darkness, 4);
+        return new DarknessSelection(darkness, 40);
     }
 
     private static class StubProvider implements CharacterGenerationProvider {

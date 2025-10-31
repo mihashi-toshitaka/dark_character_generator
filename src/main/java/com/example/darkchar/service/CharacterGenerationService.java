@@ -104,6 +104,10 @@ public class CharacterGenerationService {
         if (darknessSelection.selections().values().stream().allMatch(List::isEmpty)) {
             throw new IllegalArgumentException("闇堕ちカテゴリから少なくとも1つは選択してください。");
         }
+        int darknessLevel = darknessSelection.darknessLevel();
+        if (darknessLevel < 10 || darknessLevel > 300 || darknessLevel % 10 != 0) {
+            throw new IllegalArgumentException("闇堕ち度は10%から300%の間で10%刻みで選択してください。");
+        }
     }
 
     private String buildNarrative(CharacterInput input, DarknessSelection darknessSelection) {
@@ -137,7 +141,7 @@ public class CharacterGenerationService {
             }
         }
         builder.append('\n');
-        builder.append("闇堕ち度: ").append(darknessSelection.darknessLevel()).append("/5\n\n");
+        builder.append("闇堕ち度: ").append(formatPercent(darknessSelection.darknessLevel())).append("\n\n");
 
         if (input.darknessFreeText() != null && !input.darknessFreeText().isBlank()) {
             builder.append("■闇堕ちメモ\n");
@@ -169,6 +173,10 @@ public class CharacterGenerationService {
                 input.worldGenre().name(),
                 input.protagonistScore(),
                 highlightText.isEmpty() ? "闇の属性はまだ不明瞭です" : highlightText,
-                darknessSelection.darknessLevel());
+                formatPercent(darknessSelection.darknessLevel()));
+    }
+
+    private String formatPercent(int value) {
+        return value + "%";
     }
 }

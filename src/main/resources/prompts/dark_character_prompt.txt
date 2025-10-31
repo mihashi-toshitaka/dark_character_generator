@@ -13,7 +13,7 @@
 
 [闇堕ちカテゴリと選択肢]
 {{darknessSelections}}[闇堕ち度]
-{{darknessLevel}}/5
+{{darknessLevel}}
 
 {{darknessFreeTextSection}}条件:
 1. キャラクターが闇堕ちに至った心理的な揺らぎや事件を描写する。

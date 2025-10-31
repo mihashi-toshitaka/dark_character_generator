@@ -36,7 +36,7 @@ public class PromptTemplateRenderer {
         placeholders.put("traitFreeTextSection", buildTraitFreeTextSection(input));
         placeholders.put("protagonistScore", String.valueOf(input.protagonistScore()));
         placeholders.put("darknessSelections", buildDarknessSelections(selection));
-        placeholders.put("darknessLevel", String.valueOf(selection.darknessLevel()));
+        placeholders.put("darknessLevel", selection != null ? formatPercent(selection.darknessLevel()) : "");
         placeholders.put("darknessFreeTextSection", buildDarknessFreeTextSection(input));
 
         String result = template;
@@ -118,5 +118,9 @@ public class PromptTemplateRenderer {
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to load prompt template from " + TEMPLATE_LOCATION, ex);
         }
+    }
+
+    private String formatPercent(int value) {
+        return value + "%";
     }
 }
