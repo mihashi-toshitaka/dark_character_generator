@@ -31,7 +31,7 @@ class PromptTemplateRendererTest {
         DarknessSelection selection = new DarknessSelection(
                 Map.of(AttributeCategory.MINDSET,
                         List.of(new AttributeOption(2L, AttributeCategory.MINDSET, "復讐心", "復讐に燃える"))),
-                3);
+                30);
 
         String actual = renderer.render(input, selection);
 
@@ -59,7 +59,7 @@ class PromptTemplateRendererTest {
                 性向の変質: 復讐心
                 
                 [闇堕ち度]
-                3/5
+                30%
                 
                 [闇堕ちメモ]
                 影に魅入られた
@@ -83,7 +83,7 @@ class PromptTemplateRendererTest {
                 null,
                 2,
                 null);
-        DarknessSelection selection = new DarknessSelection(Map.of(), 1);
+        DarknessSelection selection = new DarknessSelection(Map.of(), 10);
 
         String actual = renderer.render(input, selection);
 
@@ -104,7 +104,7 @@ class PromptTemplateRendererTest {
                 [闇堕ちカテゴリと選択肢]
                 
                 [闇堕ち度]
-                1/5
+                10%
                 
                 条件:
                 1. キャラクターが闇堕ちに至った心理的な揺らぎや事件を描写する。

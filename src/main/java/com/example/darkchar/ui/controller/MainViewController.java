@@ -131,15 +131,22 @@ public class MainViewController {
         protagonistSlider.valueProperty().addListener(
                 (obs, oldVal, newVal) -> protagonistValueLabel.setText(Integer.toString(newVal.intValue())));
 
-        darknessSlider.setMin(1);
-        darknessSlider.setMax(5);
-        darknessSlider.setMajorTickUnit(1);
+        darknessSlider.setMin(10);
+        darknessSlider.setMax(300);
+        darknessSlider.setMajorTickUnit(10);
         darknessSlider.setMinorTickCount(0);
         darknessSlider.setSnapToTicks(true);
-        darknessSlider.setValue(3);
-        darknessValueLabel.setText(Integer.toString((int) darknessSlider.getValue()));
-        darknessSlider.valueProperty()
-                .addListener((obs, oldVal, newVal) -> darknessValueLabel.setText(Integer.toString(newVal.intValue())));
+        darknessSlider.setBlockIncrement(10);
+        darknessSlider.setValue(100);
+        darknessValueLabel.setText(formatPercent(normalizeDarknessValue(darknessSlider.getValue())));
+        darknessSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            int normalized = normalizeDarknessValue(newVal.doubleValue());
+            if (normalized != Math.round(newVal.doubleValue())) {
+                darknessSlider.setValue(normalized);
+                return;
+            }
+            darknessValueLabel.setText(formatPercent(normalized));
+        });
 
         worldGenreComboBox.setItems(FXCollections.observableArrayList(attributeQueryService.loadWorldGenres()));
         worldGenreComboBox.setConverter(new StringConverter<>() {
@@ -247,7 +254,7 @@ public class MainViewController {
 
             DarknessSelection selection = new DarknessSelection(
                     darknessSelections,
-                    (int) Math.round(darknessSlider.getValue()));
+                    normalizeDarknessValue(darknessSlider.getValue()));
 
             runGenerationTask(input, selection);
         } catch (IllegalArgumentException ex) {
@@ -348,6 +355,21 @@ public class MainViewController {
         if (generateButton != null && generateButton.getScene() != null) {
             generateButton.getScene().setCursor(cursor);
         }
+    }
+
+    private int normalizeDarknessValue(double value) {
+        int normalized = (int) Math.round(value / 10.0) * 10;
+        if (normalized < 10) {
+            return 10;
+        }
+        if (normalized > 300) {
+            return 300;
+        }
+        return normalized;
+    }
+
+    private String formatPercent(int value) {
+        return value + "%";
     }
 
     @FXML
