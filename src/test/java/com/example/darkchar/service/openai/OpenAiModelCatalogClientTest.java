@@ -5,11 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestClient;
-
 class OpenAiModelCatalogClientTest {
 
-    private final OpenAiModelCatalogClient client = new OpenAiModelCatalogClient(RestClient.builder());
+    private final OpenAiModelCatalogClient client = new OpenAiModelCatalogClient(new OpenAiClientFactory());
 
     @Test
     void filterAllowedModelsKeepsAllowedPrefixes() {

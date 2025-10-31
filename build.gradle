@@ -28,6 +28,7 @@ dependencies {
     implementation 'com.h2database:h2'
     implementation 'org.openjfx:javafx-controls'
     implementation 'org.openjfx:javafx-fxml'
+    implementation 'com.openai:openai:0.8.0'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
