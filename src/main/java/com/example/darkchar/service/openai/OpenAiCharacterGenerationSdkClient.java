@@ -1,32 +1,24 @@
 package com.example.darkchar.service.openai;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.example.darkchar.domain.AttributeCategory;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.InputMode;
-import com.openai.client.OpenAI;
-import com.openai.exceptions.OpenAIException;
-import com.openai.models.Response;
-import com.openai.models.ResponseCreateParams;
-import com.openai.models.ResponseOutput;
-import com.openai.models.ResponseOutputContent;
-import com.openai.models.ResponseOutputContentText;
-import com.openai.models.Usage;
+import com.openai.client.OpenAIClient;
+import com.openai.errors.BadRequestException;
+import com.openai.errors.OpenAIException;
+import com.openai.models.chat.completions.ChatCompletion;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
 
 /**
- * {@link OpenAI} SDK を使用したキャラクター生成クライアント実装。
+ * SDK を使用したキャラクター生成クライアント実装。
  */
 @Component
 public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenerationClient {
@@ -34,9 +26,6 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
     private static final Logger logger = LoggerFactory.getLogger(OpenAiCharacterGenerationSdkClient.class);
     private static final int MAX_OUTPUT_TOKENS = 600;
     private static final double TEMPERATURE = 0.8d;
-    private static final Set<String> TEMPERATURE_UNSUPPORTED_ERROR_CODES = Set.of(
-            "temperature_not_supported",
-            "model_capabilities.temperature_not_supported");
 
     private final OpenAiClientFactory clientFactory;
 
@@ -51,7 +40,7 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
             throw new OpenAiIntegrationException("OpenAIリクエストに使用するモデルが選択されていません。");
         }
 
-        OpenAI client = clientFactory.createClient(apiKey);
+        OpenAIClient client = clientFactory.createClient(apiKey);
 
         boolean triedWithoutTemperature = false;
         for (int attempt = 0; attempt < 2; attempt++) {
@@ -59,22 +48,21 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
             if (!includeTemperature) {
                 triedWithoutTemperature = true;
             }
-
             logger.info("Calling OpenAI responses API via SDK: model={}, temperature={}, maxOutputTokens={}",
                     normalizedModel, includeTemperature ? TEMPERATURE : "(omitted)", MAX_OUTPUT_TOKENS);
             try {
-                ResponseCreateParams request = buildRequest(normalizedModel, input, selection, includeTemperature);
-                Response response = client.responses().create(request);
-                logResponseMetadata(response);
-                String text = extractText(response);
+                ChatCompletionCreateParams params = buildRequest(normalizedModel, input, selection, includeTemperature);
+                ChatCompletion chatCompletion = client.chat().completions().create(params);
+                logResponseMetadata(chatCompletion);
+                String text = extractText(chatCompletion);
                 if (text != null && !text.isBlank()) {
                     return text.trim();
                 }
             } catch (OpenAIException ex) {
-                logger.warn("OpenAI responses API call failed: status={}, code={}, message={}",
-                        safeStatus(ex), safeCode(ex), ex.getMessage());
+                logger.warn("OpenAI responses API call failed: message={}", ex.getMessage());
                 if (!triedWithoutTemperature && isTemperatureUnsupported(ex)) {
-                    logger.info("Model {} does not support temperature; retrying without temperature.", normalizedModel);
+                    logger.info("Model {} does not support temperature; retrying without temperature.",
+                            normalizedModel);
                     continue;
                 }
                 throw new OpenAiIntegrationException("OpenAI API呼び出しに失敗しました。", ex);
@@ -87,20 +75,14 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
         throw new OpenAiIntegrationException("OpenAIレスポンスからテキストを取得できませんでした。");
     }
 
-    private ResponseCreateParams buildRequest(String modelId, CharacterInput input, DarknessSelection selection,
+    private ChatCompletionCreateParams buildRequest(String modelId, CharacterInput input, DarknessSelection selection,
             boolean includeTemperature) {
-        ResponseCreateParams.Builder builder = ResponseCreateParams.builder()
+        ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder()
                 .model(modelId)
-                .input(List.of(ResponseCreateParams.Input.builder()
-                        .role("user")
-                        .content(List.of(ResponseCreateParams.InputContent.ofText(
-                                ResponseCreateParams.InputContentText.builder()
-                                        .text(buildPrompt(input, selection))
-                                        .build())))
-                        .build()))
-                .maxOutputTokens(Long.valueOf(MAX_OUTPUT_TOKENS));
+                .addUserMessage(buildPrompt(input, selection))
+                .maxCompletionTokens(MAX_OUTPUT_TOKENS);
         if (includeTemperature) {
-            builder.temperature(Double.valueOf(TEMPERATURE));
+            builder.temperature(TEMPERATURE);
         }
         return builder.build();
     }
@@ -117,7 +99,8 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
         builder.append("[モード]\n");
         builder.append(input.mode() == InputMode.AUTO ? "オート" : "セミオート").append("\n\n");
 
-        if (input.mode() == InputMode.SEMI_AUTO && input.characterTraits() != null && !input.characterTraits().isEmpty()) {
+        if (input.mode() == InputMode.SEMI_AUTO && input.characterTraits() != null
+                && !input.characterTraits().isEmpty()) {
             builder.append("[キャラクター属性]\n");
             for (AttributeOption option : input.characterTraits()) {
                 builder.append("・").append(option.name()).append(": ").append(option.description()).append("\n");
@@ -165,68 +148,28 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
         return builder.toString();
     }
 
-    private String extractText(Response response) {
-        if (response == null || response.output() == null) {
+    private String extractText(ChatCompletion chatCompletion) {
+        if (chatCompletion == null) {
             return null;
         }
-        return response.output().stream()
-                .filter(Objects::nonNull)
-                .map(ResponseOutput::content)
-                .filter(Objects::nonNull)
-                .flatMap(List::stream)
-                .map(ResponseOutputContent::text)
-                .filter(Objects::nonNull)
-                .map(ResponseOutputContentText::value)
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining());
+        return chatCompletion.choices()
+                .get(0)
+                .message()
+                .content()
+                .get();
     }
 
-    private void logResponseMetadata(Response response) {
-        Usage usage = response == null ? null : response.usage();
-        logger.info("Received OpenAI response: id={}, model={}, usage={}",
-                response == null ? "n/a" : response.id(),
-                response == null ? "n/a" : response.model(),
-                usage == null ? "prompt=?, completion=?, total=?"
-                        : "prompt=%s, completion=%s, total=%s".formatted(
-                                usage.promptTokens(), usage.completionTokens(), usage.totalTokens()));
+    private void logResponseMetadata(ChatCompletion chatCompletion) {
+        logger.info("Received OpenAI response: " + chatCompletion.toString());
     }
 
     private boolean isTemperatureUnsupported(OpenAIException ex) {
-        String code = normalizeIdentifier(safeCode(ex));
-        if (code != null && TEMPERATURE_UNSUPPORTED_ERROR_CODES.contains(code)) {
-            return true;
+        if (ex instanceof BadRequestException) {
+            String message = ex.getMessage();
+            return message != null && message.toLowerCase().contains("temperature")
+                    && message.toLowerCase().contains("not supported");
         }
-        String message = normalizeMessageIndicator(ex == null ? null : ex.getMessage());
-        return message != null && message.contains("temperature") && message.contains("not supported");
+        return false;
     }
 
-    private static String normalizeIdentifier(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static String normalizeMessageIndicator(String message) {
-        if (message == null || message.isBlank()) {
-            return null;
-        }
-        return message.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
-    }
-
-    private static String safeStatus(OpenAIException ex) {
-        if (ex == null) {
-            return "n/a";
-        }
-        Integer statusCode = ex.getStatusCode();
-        return statusCode == null ? "n/a" : statusCode.toString();
-    }
-
-    private static String safeCode(OpenAIException ex) {
-        if (ex == null || ex.getError() == null) {
-            return null;
-        }
-        String code = ex.getError().getCode();
-        return code == null || code.isBlank() ? null : code;
-    }
 }

@@ -43,7 +43,8 @@ public class CharacterGenerationService {
         return generate(input, darknessSelection, providerContextStore.getActiveProviderType());
     }
 
-    public GenerationResult generate(CharacterInput input, DarknessSelection darknessSelection, ProviderType providerType) {
+    public GenerationResult generate(CharacterInput input, DarknessSelection darknessSelection,
+            ProviderType providerType) {
         validate(input, darknessSelection);
 
         ProviderType effectiveType = providerType == null ? providerContextStore.getActiveProviderType() : providerType;
@@ -96,7 +97,8 @@ public class CharacterGenerationService {
         if (input.worldGenre() == null) {
             throw new IllegalArgumentException("世界観ジャンルを選択してください。");
         }
-        if (input.mode() == InputMode.SEMI_AUTO && (input.characterTraits() == null || input.characterTraits().isEmpty())) {
+        if (input.mode() == InputMode.SEMI_AUTO
+                && (input.characterTraits() == null || input.characterTraits().isEmpty())) {
             throw new IllegalArgumentException("セミオートモードではキャラクター属性を1つ以上選択してください。");
         }
         if (darknessSelection.selections().values().stream().allMatch(List::isEmpty)) {

@@ -56,7 +56,7 @@ class CharacterGenerationServiceTest {
 
     @Test
     void generateShouldUseProviderWhenConfigured() {
-        openAiProvider.configurationStatus = ProviderConfigurationStatus.ready();
+        openAiProvider.configurationStatus = ProviderConfigurationStatus.onReady();
         openAiProvider.generatedNarrative = "remote narrative";
 
         GenerationResult result = service.generate(sampleInput(), sampleSelection(), ProviderType.OPENAI);
@@ -68,7 +68,7 @@ class CharacterGenerationServiceTest {
 
     @Test
     void generateShouldFallbackWithWarningWhenProviderFails() {
-        openAiProvider.configurationStatus = ProviderConfigurationStatus.ready();
+        openAiProvider.configurationStatus = ProviderConfigurationStatus.onReady();
         openAiProvider.exceptionToThrow = new RuntimeException("error-detail");
 
         GenerationResult result = service.generate(sampleInput(), sampleSelection(), ProviderType.OPENAI);
@@ -80,7 +80,7 @@ class CharacterGenerationServiceTest {
 
     @Test
     void generateShouldAllowSwitchingProviders() {
-        localProvider.configurationStatus = ProviderConfigurationStatus.ready();
+        localProvider.configurationStatus = ProviderConfigurationStatus.onReady();
         localProvider.generatedNarrative = "local narrative";
 
         GenerationResult result = service.generate(sampleInput(), sampleSelection(), ProviderType.LOCAL);

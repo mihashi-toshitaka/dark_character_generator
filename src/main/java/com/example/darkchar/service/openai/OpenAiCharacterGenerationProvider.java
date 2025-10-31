@@ -42,7 +42,7 @@ public class OpenAiCharacterGenerationProvider implements CharacterGenerationPro
             return ProviderConfigurationStatus
                     .notReadyWithWarning("OpenAIモデルが選択されていないため、サンプル結果を表示しています。");
         }
-        return ProviderConfigurationStatus.ready();
+        return ProviderConfigurationStatus.onReady();
     }
 
     @Override

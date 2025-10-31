@@ -2,10 +2,12 @@ package com.example.darkchar.service.openai;
 
 import org.springframework.stereotype.Component;
 
-import com.openai.client.OpenAI;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
 
 /**
- * Factory responsible for building {@link OpenAI} clients with a dynamically provided API key.
+ * Factory responsible for building {@link OpenAI} clients with a dynamically
+ * provided API key.
  */
 @Component
 public class OpenAiClientFactory {
@@ -16,12 +18,13 @@ public class OpenAiClientFactory {
      * @param apiKey OpenAI API key
      * @return configured client instance
      */
-    public OpenAI createClient(String apiKey) {
+    public OpenAIClient createClient(String apiKey) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new OpenAiIntegrationException("OpenAI APIキーが設定されていません。");
         }
-        return OpenAI.builder()
+        return OpenAIOkHttpClient.builder()
                 .apiKey(apiKey.trim())
                 .build();
     }
+
 }

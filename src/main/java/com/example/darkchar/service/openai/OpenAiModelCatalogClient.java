@@ -11,10 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.openai.client.OpenAI;
-import com.openai.exceptions.OpenAIException;
-import com.openai.models.Model;
-import com.openai.models.ModelListResponse;
+import com.openai.client.OpenAIClient;
+import com.openai.errors.OpenAIException;
+import com.openai.models.models.Model;
+import com.openai.models.models.ModelListPage;
 
 /**
  * OpenAIのモデル一覧を取得するクライアント。
@@ -53,22 +53,19 @@ public class OpenAiModelCatalogClient {
         Objects.requireNonNull(apiKey, "apiKey");
         try {
             logger.info("Fetching OpenAI model catalog via SDK");
-            OpenAI client = clientFactory.createClient(apiKey);
-            ModelListResponse response = client.models().list();
+            OpenAIClient client = clientFactory.createClient(apiKey);
+            ModelListPage response = client.models().list();
             if (response == null || response.data() == null) {
                 logger.warn("Model catalog response was empty");
                 throw new OpenAiIntegrationException("OpenAIモデル一覧を取得できませんでした。");
             }
-
             List<String> models = filterAllowedModels(response.data().stream()
                     .map(Model::id)
                     .collect(Collectors.toList()));
-
             logger.info("Retrieved {} models from OpenAI", models.size());
             return models;
         } catch (OpenAIException ex) {
-            logger.warn("OpenAI model catalog request failed: status={}, code={}, message={}",
-                    safeStatus(ex), safeCode(ex), ex.getMessage());
+            logger.warn("OpenAI model catalog request failed: message={}", ex.getMessage());
             throw new OpenAiIntegrationException("OpenAIモデル一覧の取得に失敗しました。", ex);
         } catch (RuntimeException ex) {
             logger.warn("OpenAI model catalog request error: {}", ex.getMessage());
@@ -93,19 +90,4 @@ public class OpenAiModelCatalogClient {
                 .collect(Collectors.toList());
     }
 
-    private static String safeStatus(OpenAIException ex) {
-        if (ex == null) {
-            return "n/a";
-        }
-        Integer statusCode = ex.getStatusCode();
-        return statusCode == null ? "n/a" : statusCode.toString();
-    }
-
-    private static String safeCode(OpenAIException ex) {
-        if (ex == null || ex.getError() == null) {
-            return null;
-        }
-        String code = ex.getError().getCode();
-        return code == null || code.isBlank() ? null : code;
-    }
 }

@@ -11,7 +11,7 @@ public record ProviderConfigurationStatus(boolean ready, Optional<String> warnin
         warningMessage = warningMessage == null ? Optional.empty() : warningMessage;
     }
 
-    public static ProviderConfigurationStatus ready() {
+    public static ProviderConfigurationStatus onReady() {
         return new ProviderConfigurationStatus(true, Optional.empty());
     }
 
