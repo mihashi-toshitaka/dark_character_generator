@@ -24,7 +24,7 @@ import com.openai.models.chat.completions.ChatCompletionCreateParams;
 public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenerationClient {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenAiCharacterGenerationSdkClient.class);
-    private static final int MAX_OUTPUT_TOKENS = 600;
+    private static final int MAX_OUTPUT_TOKENS = 1800;
     private static final double TEMPERATURE = 0.8d;
 
     private final OpenAiClientFactory clientFactory;
@@ -167,7 +167,7 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
         if (ex instanceof BadRequestException) {
             String message = ex.getMessage();
             return message != null && message.toLowerCase().contains("temperature")
-                    && message.toLowerCase().contains("not supported");
+                    && message.toLowerCase().contains("not support");
         }
         return false;
     }

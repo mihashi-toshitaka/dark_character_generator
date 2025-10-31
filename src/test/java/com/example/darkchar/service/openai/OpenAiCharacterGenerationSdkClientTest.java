@@ -29,27 +29,27 @@ import com.openai.errors.OpenAIException;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import com.openai.models.chat.completions.ChatCompletionMessage;
-import com.openai.resources.chat.ChatClient;
-import com.openai.resources.chat.completions.CompletionsClient;
+import com.openai.services.blocking.ChatService;
+import com.openai.services.blocking.chat.ChatCompletionService;
 
 class OpenAiCharacterGenerationSdkClientTest {
 
     private OpenAiClientFactory clientFactory;
     private OpenAIClient openAiClient;
-    private ChatClient chatClient;
-    private CompletionsClient completionsClient;
+    private ChatService chatService;
+    private ChatCompletionService chatCompletionService;
     private OpenAiCharacterGenerationSdkClient client;
 
     @BeforeEach
     void setUp() {
         clientFactory = mock(OpenAiClientFactory.class);
         openAiClient = mock(OpenAIClient.class);
-        chatClient = mock(ChatClient.class);
-        completionsClient = mock(CompletionsClient.class);
+        chatService = mock(ChatService.class);
+        chatCompletionService = mock(ChatCompletionService.class);
 
         when(clientFactory.createClient("test-key")).thenReturn(openAiClient);
-        when(openAiClient.chat()).thenReturn(chatClient);
-        when(chatClient.completions()).thenReturn(completionsClient);
+        when(openAiClient.chat()).thenReturn(chatService);
+        when(chatService.completions()).thenReturn(chatCompletionService);
 
         client = new OpenAiCharacterGenerationSdkClient(clientFactory);
     }
@@ -63,7 +63,7 @@ class OpenAiCharacterGenerationSdkClientTest {
         ChatCompletion.Choice choice = mock(ChatCompletion.Choice.class);
         ChatCompletionMessage message = mock(ChatCompletionMessage.class);
 
-        when(completionsClient.create(any(ChatCompletionCreateParams.class))).thenReturn(chatCompletion);
+        when(chatCompletionService.create(any(ChatCompletionCreateParams.class))).thenReturn(chatCompletion);
         when(chatCompletion.choices()).thenReturn(List.of(choice));
         when(choice.message()).thenReturn(message);
         when(message.content()).thenReturn(Optional.of("第一段落。\n第二段落。\nそして終わり。\n"));
@@ -72,8 +72,8 @@ class OpenAiCharacterGenerationSdkClientTest {
 
         assertThat(actual).isEqualTo("第一段落。\n第二段落。\nそして終わり。");
 
-        verify(completionsClient, times(1)).create(any(ChatCompletionCreateParams.class));
-        verifyNoMoreInteractions(completionsClient);
+        verify(chatCompletionService, times(1)).create(any(ChatCompletionCreateParams.class));
+        verifyNoMoreInteractions(chatCompletionService);
     }
 
     @Test
@@ -85,7 +85,7 @@ class OpenAiCharacterGenerationSdkClientTest {
         ChatCompletion.Choice choice = mock(ChatCompletion.Choice.class);
         ChatCompletionMessage message = mock(ChatCompletionMessage.class);
 
-        when(completionsClient.create(any(ChatCompletionCreateParams.class)))
+        when(chatCompletionService.create(any(ChatCompletionCreateParams.class)))
                 .thenThrow(mockTemperatureUnsupportedException())
                 .thenReturn(chatCompletion);
         when(chatCompletion.choices()).thenReturn(List.of(choice));
@@ -96,8 +96,9 @@ class OpenAiCharacterGenerationSdkClientTest {
 
         assertThat(actual).isEqualTo("最初の行。\n次の行。");
 
-        ArgumentCaptor<ChatCompletionCreateParams> requestCaptor = ArgumentCaptor.forClass(ChatCompletionCreateParams.class);
-        verify(completionsClient, times(2)).create(requestCaptor.capture());
+        ArgumentCaptor<ChatCompletionCreateParams> requestCaptor = ArgumentCaptor
+                .forClass(ChatCompletionCreateParams.class);
+        verify(chatCompletionService, times(2)).create(requestCaptor.capture());
         List<ChatCompletionCreateParams> requests = requestCaptor.getAllValues();
         assertThat(requests.get(0).temperature()).isEqualTo(0.8d);
         assertThat(requests.get(1).temperature()).isNull();
@@ -111,7 +112,7 @@ class OpenAiCharacterGenerationSdkClientTest {
         OpenAIException exception = mock(OpenAIException.class);
         when(exception.getMessage()).thenReturn("The provided prompt is invalid.");
 
-        when(completionsClient.create(any(ChatCompletionCreateParams.class))).thenThrow(exception);
+        when(chatCompletionService.create(any(ChatCompletionCreateParams.class))).thenThrow(exception);
 
         assertThatThrownBy(() -> client.generateNarrative("test-key", "gpt-test", input, selection))
                 .isInstanceOf(OpenAiIntegrationException.class)
