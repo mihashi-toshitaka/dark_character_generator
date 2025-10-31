@@ -1,6 +1,5 @@
 package com.example.darkchar.service.openai;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -219,30 +218,15 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
         if (ex == null) {
             return "n/a";
         }
-        try {
-            Method method = ex.getClass().getMethod("getStatusCode");
-            Object value = method.invoke(ex);
-            return value == null ? "n/a" : value.toString();
-        } catch (Exception ignored) {
-            return "n/a";
-        }
+        Integer statusCode = ex.getStatusCode();
+        return statusCode == null ? "n/a" : statusCode.toString();
     }
 
     private static String safeCode(OpenAIException ex) {
-        if (ex == null) {
+        if (ex == null || ex.getError() == null) {
             return null;
         }
-        try {
-            Method errorMethod = ex.getClass().getMethod("getError");
-            Object error = errorMethod.invoke(ex);
-            if (error == null) {
-                return null;
-            }
-            Method codeMethod = error.getClass().getMethod("getCode");
-            Object code = codeMethod.invoke(error);
-            return code == null ? null : code.toString();
-        } catch (Exception ignored) {
-            return null;
-        }
+        String code = ex.getError().getCode();
+        return code == null || code.isBlank() ? null : code;
     }
 }
