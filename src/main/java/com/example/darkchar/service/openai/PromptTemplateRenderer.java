@@ -3,7 +3,6 @@ package com.example.darkchar.service.openai;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -29,22 +28,17 @@ public class PromptTemplateRenderer {
     }
 
     public String render(CharacterInput input, DarknessSelection selection) {
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("worldGenre", input.worldGenre() != null ? input.worldGenre().name() : "");
-        placeholders.put("mode", input.mode() == InputMode.AUTO ? "オート" : "セミオート");
-        placeholders.put("characterAttributesSection", buildCharacterAttributesSection(input));
-        placeholders.put("traitFreeTextSection", buildTraitFreeTextSection(input));
-        placeholders.put("protagonistScore", String.valueOf(input.protagonistScore()));
-        placeholders.put("darknessSelections", buildDarknessSelections(selection));
-        placeholders.put("darknessLevel", selection != null ? formatPercent(selection.darknessLevel()) : "");
-        placeholders.put("darknessFreeTextSection", buildDarknessFreeTextSection(input));
+        Map<String, String> placeholders = Map.of(
+                "worldGenre", getWorldGenreName(input),
+                "mode", toModeLabel(input.mode()),
+                "characterAttributesSection", buildCharacterAttributesSection(input),
+                "traitFreeTextSection", buildTraitFreeTextSection(input),
+                "protagonistScore", Integer.toString(input.protagonistScore()),
+                "darknessSelections", buildDarknessSelections(selection),
+                "darknessLevel", selection != null ? formatPercent(selection.darknessLevel()) : "",
+                "darknessFreeTextSection", buildDarknessFreeTextSection(input));
 
-        String result = template;
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            String value = entry.getValue() == null ? "" : entry.getValue();
-            result = result.replace("{{" + entry.getKey() + "}}", value);
-        }
-        return result;
+        return renderTemplate(placeholders);
     }
 
     private String buildCharacterAttributesSection(CharacterInput input) {
@@ -55,60 +49,44 @@ public class PromptTemplateRenderer {
         if (traits == null || traits.isEmpty()) {
             return "";
         }
-        StringBuilder builder = new StringBuilder();
-        builder.append("[キャラクター属性]\n");
+        StringJoiner lines = new StringJoiner("\n");
         for (AttributeOption option : traits) {
-            if (option == null) {
-                continue;
+            String formatted = formatCharacterTrait(option);
+            if (!formatted.isEmpty()) {
+                lines.add(formatted);
             }
-            builder.append("・").append(option.name());
-            if (option.description() != null && !option.description().isBlank()) {
-                builder.append(": ").append(option.description());
-            }
-            builder.append("\n");
         }
-        builder.append("\n");
-        return builder.toString();
+        if (lines.length() == 0) {
+            return "";
+        }
+        return "[キャラクター属性]\n" + lines + "\n\n";
     }
 
     private String buildTraitFreeTextSection(CharacterInput input) {
-        String freeText = input.traitFreeText();
-        if (freeText == null || freeText.isBlank()) {
-            return "";
-        }
-        return "[キャラクター属性メモ]\n" + freeText.trim() + "\n\n";
+        return formatFreeTextSection("[キャラクター属性メモ]", input.traitFreeText());
     }
 
     private String buildDarknessSelections(DarknessSelection selection) {
-        StringBuilder builder = new StringBuilder();
-        if (selection != null && selection.selections() != null) {
-            for (var entry : selection.selections().entrySet()) {
-                List<AttributeOption> options = entry.getValue();
-                if (options == null || options.isEmpty()) {
-                    continue;
-                }
-                StringJoiner joiner = new StringJoiner("、");
-                for (AttributeOption option : options) {
-                    if (option != null) {
-                        joiner.add(option.name());
-                    }
-                }
-                builder.append(entry.getKey().getDisplayName())
-                        .append(": ")
-                        .append(joiner)
-                        .append("\n");
-            }
+        if (selection == null || selection.selections() == null || selection.selections().isEmpty()) {
+            return "";
         }
-        builder.append("\n");
-        return builder.toString();
+        StringJoiner lines = new StringJoiner("\n");
+        for (var entry : selection.selections().entrySet()) {
+            var category = entry.getKey();
+            String optionNames = formatOptionNames(entry.getValue());
+            if (category == null || optionNames.isEmpty()) {
+                continue;
+            }
+            lines.add(category.getDisplayName() + ": " + optionNames);
+        }
+        if (lines.length() == 0) {
+            return "";
+        }
+        return lines + "\n\n";
     }
 
     private String buildDarknessFreeTextSection(CharacterInput input) {
-        String freeText = input.darknessFreeText();
-        if (freeText == null || freeText.isBlank()) {
-            return "";
-        }
-        return "[闇堕ちメモ]\n" + freeText.trim() + "\n\n";
+        return formatFreeTextSection("[闇堕ちメモ]", input.darknessFreeText());
     }
 
     private String loadTemplate(ResourceLoader resourceLoader) {
@@ -122,5 +100,67 @@ public class PromptTemplateRenderer {
 
     private String formatPercent(int value) {
         return value + "%";
+    }
+
+    private String getWorldGenreName(CharacterInput input) {
+        return input.worldGenre() != null ? input.worldGenre().name() : "";
+    }
+
+    private String toModeLabel(InputMode mode) {
+        if (mode == null) {
+            return "";
+        }
+        return mode == InputMode.AUTO ? "オート" : "セミオート";
+    }
+
+    private String renderTemplate(Map<String, String> placeholders) {
+        String rendered = template;
+        for (var entry : placeholders.entrySet()) {
+            rendered = rendered.replace("{{" + entry.getKey() + "}}", entry.getValue());
+        }
+        return rendered;
+    }
+
+    private String formatCharacterTrait(AttributeOption option) {
+        if (option == null || !hasText(option.name())) {
+            return "";
+        }
+        StringBuilder line = new StringBuilder("・").append(option.name().trim());
+        if (hasText(option.description())) {
+            line.append(": ").append(option.description().trim());
+        }
+        return line.toString();
+    }
+
+    private String formatOptionNames(List<AttributeOption> options) {
+        if (options == null || options.isEmpty()) {
+            return "";
+        }
+        StringJoiner joiner = new StringJoiner("、");
+        for (AttributeOption option : options) {
+            String name = extractOptionName(option);
+            if (!name.isEmpty()) {
+                joiner.add(name);
+            }
+        }
+        return joiner.length() == 0 ? "" : joiner.toString();
+    }
+
+    private String extractOptionName(AttributeOption option) {
+        if (option == null || !hasText(option.name())) {
+            return "";
+        }
+        return option.name().trim();
+    }
+
+    private String formatFreeTextSection(String heading, String freeText) {
+        if (!hasText(freeText)) {
+            return "";
+        }
+        return heading + "\n" + freeText.trim() + "\n\n";
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
