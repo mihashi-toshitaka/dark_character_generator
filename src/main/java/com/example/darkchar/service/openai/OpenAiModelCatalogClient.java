@@ -26,6 +26,16 @@ public class OpenAiModelCatalogClient {
     private static final Pattern GPT_PREFIX = Pattern.compile("^gpt-", Pattern.CASE_INSENSITIVE);
     private static final Pattern O_SERIES_PREFIX = Pattern.compile("^o\\d+-", Pattern.CASE_INSENSITIVE);
     private static final Pattern DATE_SUFFIX = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
+    private static final Pattern SHORT_DATE_SUFFIX = Pattern.compile("-(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])$");
+    private static final List<Pattern> EXCLUDED_KEYWORDS = List.of(
+            Pattern.compile("embedding", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("image", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("audio", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("realtime", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("vision-preview", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("-preview", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("tts", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("whisper", Pattern.CASE_INSENSITIVE));
 
     private final OpenAiClientFactory clientFactory;
 
@@ -72,6 +82,9 @@ public class OpenAiModelCatalogClient {
                 .map(String::trim)
                 .filter(modelId -> GPT_PREFIX.matcher(modelId).find() || O_SERIES_PREFIX.matcher(modelId).find())
                 .filter(modelId -> !DATE_SUFFIX.matcher(modelId).find())
+                .filter(modelId -> !SHORT_DATE_SUFFIX.matcher(modelId).find())
+                .filter(modelId -> EXCLUDED_KEYWORDS.stream()
+                        .noneMatch(pattern -> pattern.matcher(modelId).find()))
                 .sorted(Comparator.naturalOrder())
                 .collect(Collectors.toList());
     }
