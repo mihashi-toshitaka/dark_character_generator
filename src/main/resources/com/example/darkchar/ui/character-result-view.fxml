@@ -19,6 +19,7 @@
     <bottom>
         <HBox alignment="CENTER_RIGHT" spacing="8" BorderPane.alignment="CENTER">
             <children>
+                <Button fx:id="showPromptButton" text="プロンプトを表示" onAction="#handleShowPrompt" />
                 <Button text="閉じる" onAction="#handleClose" />
             </children>
             <padding>

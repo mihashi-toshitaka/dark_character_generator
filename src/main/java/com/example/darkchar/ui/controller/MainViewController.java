@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationContext;
@@ -264,7 +265,7 @@ public class MainViewController {
         }
     }
 
-    private void showResultWindow(GeneratedCharacter generatedCharacter) {
+    private void showResultWindow(GeneratedCharacter generatedCharacter, Optional<String> prompt) {
         try {
             if (resultStage == null) {
                 FXMLLoader loader = new FXMLLoader(
@@ -293,7 +294,7 @@ public class MainViewController {
             }
 
             if (resultController != null) {
-                resultController.setGeneratedCharacter(generatedCharacter);
+                resultController.setResult(generatedCharacter, prompt);
             }
 
             if (resultStage != null && !resultStage.isShowing()) {
@@ -322,7 +323,7 @@ public class MainViewController {
             GenerationResult result = task.getValue();
             if (result != null) {
                 result.warningMessage().ifPresent(message -> showAlert(Alert.AlertType.WARNING, message));
-                showResultWindow(result.generatedCharacter());
+                showResultWindow(result.generatedCharacter(), result.prompt());
             }
         });
 
