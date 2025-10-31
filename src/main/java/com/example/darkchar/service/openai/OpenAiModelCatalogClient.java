@@ -2,6 +2,7 @@ package com.example.darkchar.service.openai;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -79,12 +80,16 @@ public class OpenAiModelCatalogClient {
         return modelIds.stream()
                 .filter(Objects::nonNull)
                 .map(String::trim)
+                .filter(modelId -> !modelId.isEmpty())
                 .filter(modelId -> GPT_PREFIX.matcher(modelId).find() || O_SERIES_PREFIX.matcher(modelId).find())
                 .filter(modelId -> !DATE_SUFFIX.matcher(modelId).find())
                 .filter(modelId -> !SHORT_DATE_SUFFIX.matcher(modelId).find())
                 .filter(modelId -> EXCLUDED_KEYWORDS.stream()
                         .noneMatch(pattern -> pattern.matcher(modelId).find()))
-                .sorted(Comparator.naturalOrder())
+                .distinct()
+                .sorted(Comparator
+                        .comparing((String modelId) -> modelId.toLowerCase(Locale.ROOT))
+                        .thenComparing(Comparator.naturalOrder()))
                 .collect(Collectors.toList());
     }
 
