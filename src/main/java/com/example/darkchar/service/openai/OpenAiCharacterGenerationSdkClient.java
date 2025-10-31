@@ -1,16 +1,11 @@
 package com.example.darkchar.service.openai;
 
-import java.util.List;
-import java.util.StringJoiner;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
-import com.example.darkchar.domain.InputMode;
 import com.openai.client.OpenAIClient;
 import com.openai.errors.BadRequestException;
 import com.openai.errors.OpenAIException;
@@ -28,9 +23,12 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
     private static final double TEMPERATURE = 0.8d;
 
     private final OpenAiClientFactory clientFactory;
+    private final PromptTemplateRenderer promptTemplateRenderer;
 
-    public OpenAiCharacterGenerationSdkClient(OpenAiClientFactory clientFactory) {
+    public OpenAiCharacterGenerationSdkClient(OpenAiClientFactory clientFactory,
+            PromptTemplateRenderer promptTemplateRenderer) {
         this.clientFactory = clientFactory;
+        this.promptTemplateRenderer = promptTemplateRenderer;
     }
 
     @Override
@@ -42,6 +40,7 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
 
         OpenAIClient client = clientFactory.createClient(apiKey);
 
+        String prompt = promptTemplateRenderer.render(input, selection);
         boolean triedWithoutTemperature = false;
         for (int attempt = 0; attempt < 2; attempt++) {
             boolean includeTemperature = attempt == 0;
@@ -51,7 +50,7 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
             logger.info("Calling OpenAI responses API via SDK: model={}, temperature={}, maxOutputTokens={}",
                     normalizedModel, includeTemperature ? TEMPERATURE : "(omitted)", MAX_OUTPUT_TOKENS);
             try {
-                ChatCompletionCreateParams params = buildRequest(normalizedModel, input, selection, includeTemperature);
+                ChatCompletionCreateParams params = buildRequest(normalizedModel, prompt, includeTemperature);
                 ChatCompletion chatCompletion = client.chat().completions().create(params);
                 logResponseMetadata(chatCompletion);
                 String text = extractText(chatCompletion);
@@ -75,77 +74,15 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
         throw new OpenAiIntegrationException("OpenAIレスポンスからテキストを取得できませんでした。");
     }
 
-    private ChatCompletionCreateParams buildRequest(String modelId, CharacterInput input, DarknessSelection selection,
-            boolean includeTemperature) {
+    private ChatCompletionCreateParams buildRequest(String modelId, String prompt, boolean includeTemperature) {
         ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder()
                 .model(modelId)
-                .addUserMessage(buildPrompt(input, selection))
+                .addUserMessage(prompt)
                 .maxCompletionTokens(MAX_OUTPUT_TOKENS);
         if (includeTemperature) {
             builder.temperature(TEMPERATURE);
         }
         return builder.build();
-    }
-
-    private String buildPrompt(CharacterInput input, DarknessSelection selection) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("あなたは闇堕ちキャラクターの設定と短いストーリーを作成する日本語のライターです。\n");
-        builder.append("以下の入力情報に基づき、世界観の説明、キャラクターの転落のきっかけ、闇堕ち後の姿を含む物語を400〜600文字程度で作成してください。\n");
-        builder.append("最後に箇条書きは使わず、段落構成でまとめてください。\n\n");
-
-        builder.append("[世界観ジャンル]\n");
-        builder.append(input.worldGenre().name()).append("\n\n");
-
-        builder.append("[モード]\n");
-        builder.append(input.mode() == InputMode.AUTO ? "オート" : "セミオート").append("\n\n");
-
-        if (input.mode() == InputMode.SEMI_AUTO && input.characterTraits() != null
-                && !input.characterTraits().isEmpty()) {
-            builder.append("[キャラクター属性]\n");
-            for (AttributeOption option : input.characterTraits()) {
-                builder.append("・").append(option.name()).append(": ").append(option.description()).append("\n");
-            }
-            builder.append("\n");
-        }
-
-        if (input.traitFreeText() != null && !input.traitFreeText().isBlank()) {
-            builder.append("[キャラクター属性メモ]\n");
-            builder.append(input.traitFreeText().trim()).append("\n\n");
-        }
-
-        builder.append("[主人公度]\n");
-        builder.append(input.protagonistScore()).append("/5\n\n");
-
-        builder.append("[闇堕ちカテゴリと選択肢]\n");
-        for (var entry : selection.selections().entrySet()) {
-            List<AttributeOption> options = entry.getValue();
-            if (options == null || options.isEmpty()) {
-                continue;
-            }
-            builder.append(entry.getKey().getDisplayName()).append(": ");
-            StringJoiner joiner = new StringJoiner("、");
-            for (AttributeOption option : options) {
-                joiner.add(option.name());
-            }
-            builder.append(joiner).append("\n");
-        }
-        builder.append("\n");
-
-        builder.append("[闇堕ち度]\n");
-        builder.append(selection.darknessLevel()).append("/5\n\n");
-
-        if (input.darknessFreeText() != null && !input.darknessFreeText().isBlank()) {
-            builder.append("[闇堕ちメモ]\n");
-            builder.append(input.darknessFreeText().trim()).append("\n\n");
-        }
-
-        builder.append("条件:\n");
-        builder.append("1. キャラクターが闇堕ちに至った心理的な揺らぎや事件を描写する。\n");
-        builder.append("2. 闇堕ち後のビジュアルや能力、価値観の変化を盛り込む。\n");
-        builder.append("3. 最後は読者が次の展開を想像できる余韻を残す。\n");
-        builder.append("4. 出力は日本語で行う。\n");
-
-        return builder.toString();
     }
 
     private String extractText(ChatCompletion chatCompletion) {

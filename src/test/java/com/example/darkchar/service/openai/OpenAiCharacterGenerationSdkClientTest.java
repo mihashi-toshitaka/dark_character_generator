@@ -38,6 +38,7 @@ class OpenAiCharacterGenerationSdkClientTest {
     private OpenAIClient openAiClient;
     private ChatService chatService;
     private ChatCompletionService chatCompletionService;
+    private PromptTemplateRenderer promptTemplateRenderer;
     private OpenAiCharacterGenerationSdkClient client;
 
     @BeforeEach
@@ -46,12 +47,15 @@ class OpenAiCharacterGenerationSdkClientTest {
         openAiClient = mock(OpenAIClient.class);
         chatService = mock(ChatService.class);
         chatCompletionService = mock(ChatCompletionService.class);
+        promptTemplateRenderer = mock(PromptTemplateRenderer.class);
 
         when(clientFactory.createClient("test-key")).thenReturn(openAiClient);
         when(openAiClient.chat()).thenReturn(chatService);
         when(chatService.completions()).thenReturn(chatCompletionService);
+        when(promptTemplateRenderer.render(any(CharacterInput.class), any(DarknessSelection.class)))
+                .thenReturn("PROMPT");
 
-        client = new OpenAiCharacterGenerationSdkClient(clientFactory);
+        client = new OpenAiCharacterGenerationSdkClient(clientFactory, promptTemplateRenderer);
     }
 
     @Test
@@ -74,6 +78,7 @@ class OpenAiCharacterGenerationSdkClientTest {
 
         verify(chatCompletionService, times(1)).create(any(ChatCompletionCreateParams.class));
         verifyNoMoreInteractions(chatCompletionService);
+        verify(promptTemplateRenderer, times(1)).render(input, selection);
     }
 
     @Test
@@ -102,6 +107,7 @@ class OpenAiCharacterGenerationSdkClientTest {
         List<ChatCompletionCreateParams> requests = requestCaptor.getAllValues();
         assertThat(requests.get(0).temperature()).isEqualTo(0.8d);
         assertThat(requests.get(1).temperature()).isNull();
+        verify(promptTemplateRenderer, times(1)).render(input, selection);
     }
 
     @Test
