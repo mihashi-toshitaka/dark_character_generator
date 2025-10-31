@@ -16,7 +16,7 @@ public interface CharacterGenerationProvider {
 
     ProviderConfigurationStatus assessConfiguration(AiProviderContext context);
 
-    String generateNarrative(AiProviderContext context, CharacterInput input, DarknessSelection selection);
+    ProviderGenerationResult generate(AiProviderContext context, CharacterInput input, DarknessSelection selection);
 
     default boolean supportsModelListing() {
         return false;

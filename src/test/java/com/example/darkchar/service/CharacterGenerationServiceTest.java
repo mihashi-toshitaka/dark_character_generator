@@ -20,6 +20,7 @@ import com.example.darkchar.service.ai.AiProviderContextStore;
 import com.example.darkchar.service.ai.CharacterGenerationProvider;
 import com.example.darkchar.service.ai.CharacterGenerationStrategyRegistry;
 import com.example.darkchar.service.ai.ProviderConfigurationStatus;
+import com.example.darkchar.service.ai.ProviderGenerationResult;
 import com.example.darkchar.service.ai.ProviderType;
 
 class CharacterGenerationServiceTest {
@@ -48,6 +49,7 @@ class CharacterGenerationServiceTest {
 
         assertThat(result.usedProvider()).isFalse();
         assertThat(result.warningMessage()).isEmpty();
+        assertThat(result.prompt()).isEmpty();
         assertThat(character.narrative()).contains("中世ダークファンタジー");
         assertThat(character.narrative()).contains("復讐心");
         assertThat(character.narrative()).contains("白髪化");
@@ -58,12 +60,14 @@ class CharacterGenerationServiceTest {
     void generateShouldUseProviderWhenConfigured() {
         openAiProvider.configurationStatus = ProviderConfigurationStatus.onReady();
         openAiProvider.generatedNarrative = "remote narrative";
+        openAiProvider.generatedPrompt = "generated prompt";
 
         GenerationResult result = service.generate(sampleInput(), sampleSelection(), ProviderType.OPENAI);
 
         assertThat(result.usedProvider()).isTrue();
         assertThat(result.warningMessage()).isEmpty();
         assertThat(result.generatedCharacter().narrative()).isEqualTo("remote narrative");
+        assertThat(result.prompt()).hasValue("generated prompt");
     }
 
     @Test
@@ -76,17 +80,20 @@ class CharacterGenerationServiceTest {
         assertThat(result.usedProvider()).isFalse();
         assertThat(result.warningMessage())
                 .hasValue("OpenAI連携に失敗したため、サンプル結果を表示しています。詳細: error-detail");
+        assertThat(result.prompt()).isEmpty();
     }
 
     @Test
     void generateShouldAllowSwitchingProviders() {
         localProvider.configurationStatus = ProviderConfigurationStatus.onReady();
         localProvider.generatedNarrative = "local narrative";
+        localProvider.generatedPrompt = "local prompt";
 
         GenerationResult result = service.generate(sampleInput(), sampleSelection(), ProviderType.LOCAL);
 
         assertThat(result.usedProvider()).isTrue();
         assertThat(result.generatedCharacter().narrative()).isEqualTo("local narrative");
+        assertThat(result.prompt()).hasValue("local prompt");
     }
 
     private CharacterInput sampleInput() {
@@ -114,6 +121,7 @@ class CharacterGenerationServiceTest {
         private final String displayName;
         private ProviderConfigurationStatus configurationStatus = ProviderConfigurationStatus.notReady();
         private String generatedNarrative = "";
+        private String generatedPrompt = "";
         private RuntimeException exceptionToThrow;
 
         StubProvider(ProviderType providerType, String displayName) {
@@ -137,11 +145,11 @@ class CharacterGenerationServiceTest {
         }
 
         @Override
-        public String generateNarrative(AiProviderContext context, CharacterInput input, DarknessSelection selection) {
+        public ProviderGenerationResult generate(AiProviderContext context, CharacterInput input, DarknessSelection selection) {
             if (exceptionToThrow != null) {
                 throw exceptionToThrow;
             }
-            return generatedNarrative;
+            return new ProviderGenerationResult(generatedNarrative, generatedPrompt);
         }
     }
 }

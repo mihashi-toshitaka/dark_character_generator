@@ -22,6 +22,7 @@ import com.example.darkchar.service.ai.AiProviderContextStore;
 import com.example.darkchar.service.ai.CharacterGenerationProvider;
 import com.example.darkchar.service.ai.CharacterGenerationStrategyRegistry;
 import com.example.darkchar.service.ai.ProviderConfigurationStatus;
+import com.example.darkchar.service.ai.ProviderGenerationResult;
 import com.example.darkchar.service.ai.ProviderType;
 import com.example.darkchar.service.openai.OpenAiIntegrationException;
 
@@ -54,6 +55,7 @@ public class CharacterGenerationService {
         String narrative;
         boolean usedProvider = false;
         Optional<String> warning = Optional.empty();
+        Optional<String> prompt = Optional.empty();
 
         if (providerOptional.isPresent()) {
             CharacterGenerationProvider provider = providerOptional.get();
@@ -66,7 +68,12 @@ public class CharacterGenerationService {
                 narrative = buildNarrative(input, darknessSelection);
             } else {
                 try {
-                    narrative = provider.generateNarrative(context, input, darknessSelection);
+                    ProviderGenerationResult providerResult = provider.generate(context, input, darknessSelection);
+                    if (providerResult == null || providerResult.narrative() == null) {
+                        throw new OpenAiIntegrationException("プロバイダから有効な結果を取得できませんでした。");
+                    }
+                    narrative = providerResult.narrative();
+                    prompt = providerResult.prompt();
                     usedProvider = true;
                 } catch (OpenAiIntegrationException ex) {
                     logger.warn("{}連携に失敗したためローカル生成へフォールバックします: {}", provider.getDisplayName(),
@@ -84,13 +91,13 @@ public class CharacterGenerationService {
             narrative = buildNarrative(input, darknessSelection);
         }
 
-        return buildResult(input, darknessSelection, narrative, usedProvider, warning);
+        return buildResult(input, darknessSelection, narrative, usedProvider, warning, prompt);
     }
 
     private GenerationResult buildResult(CharacterInput input, DarknessSelection darknessSelection, String narrative,
-            boolean usedProvider, Optional<String> warning) {
+            boolean usedProvider, Optional<String> warning, Optional<String> prompt) {
         GeneratedCharacter character = new GeneratedCharacter(input, darknessSelection, narrative, Instant.now());
-        return new GenerationResult(character, usedProvider, warning);
+        return new GenerationResult(character, usedProvider, warning, prompt);
     }
 
     private void validate(CharacterInput input, DarknessSelection darknessSelection) {
