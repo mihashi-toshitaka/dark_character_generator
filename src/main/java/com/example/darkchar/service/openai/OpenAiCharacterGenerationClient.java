@@ -2,6 +2,7 @@ package com.example.darkchar.service.openai;
 
 import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
+import com.example.darkchar.service.ai.ProviderGenerationResult;
 
 /**
  * OpenAI APIを用いてキャラクター生成テキストを取得するクライアントの抽象化。
@@ -17,5 +18,5 @@ public interface OpenAiCharacterGenerationClient {
      * @return 生成されたテキスト
      * @throws OpenAiIntegrationException OpenAI連携に失敗した場合
      */
-    String generateNarrative(String apiKey, String modelId, CharacterInput input, DarknessSelection selection);
+    ProviderGenerationResult generate(String apiKey, String modelId, CharacterInput input, DarknessSelection selection);
 }

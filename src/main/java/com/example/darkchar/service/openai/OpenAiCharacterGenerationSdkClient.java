@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
+import com.example.darkchar.service.ai.ProviderGenerationResult;
 import com.openai.client.OpenAIClient;
 import com.openai.errors.BadRequestException;
 import com.openai.errors.OpenAIException;
@@ -32,7 +33,7 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
     }
 
     @Override
-    public String generateNarrative(String apiKey, String modelId, CharacterInput input, DarknessSelection selection) {
+    public ProviderGenerationResult generate(String apiKey, String modelId, CharacterInput input, DarknessSelection selection) {
         String normalizedModel = modelId == null ? null : modelId.trim();
         if (normalizedModel == null || normalizedModel.isEmpty()) {
             throw new OpenAiIntegrationException("OpenAIリクエストに使用するモデルが選択されていません。");
@@ -55,7 +56,7 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
                 logResponseMetadata(chatCompletion);
                 String text = extractText(chatCompletion);
                 if (text != null && !text.isBlank()) {
-                    return text.trim();
+                    return new ProviderGenerationResult(text.trim(), prompt);
                 }
             } catch (OpenAIException ex) {
                 logger.warn("OpenAI responses API call failed: message={}", ex.getMessage());

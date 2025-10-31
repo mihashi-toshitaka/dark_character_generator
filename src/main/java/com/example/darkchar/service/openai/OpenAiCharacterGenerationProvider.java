@@ -10,6 +10,7 @@ import com.example.darkchar.service.ai.AiProviderContext;
 import com.example.darkchar.service.ai.CharacterGenerationProvider;
 import com.example.darkchar.service.ai.ProviderConfigurationStatus;
 import com.example.darkchar.service.ai.ProviderType;
+import com.example.darkchar.service.ai.ProviderGenerationResult;
 
 @Component
 public class OpenAiCharacterGenerationProvider implements CharacterGenerationProvider {
@@ -46,12 +47,12 @@ public class OpenAiCharacterGenerationProvider implements CharacterGenerationPro
     }
 
     @Override
-    public String generateNarrative(AiProviderContext context, CharacterInput input, DarknessSelection selection) {
+    public ProviderGenerationResult generate(AiProviderContext context, CharacterInput input, DarknessSelection selection) {
         String apiKey = context.apiKey()
                 .orElseThrow(() -> new OpenAiIntegrationException("OpenAI APIキーが設定されていません。"));
         String modelId = context.selectedModel()
                 .orElseThrow(() -> new OpenAiIntegrationException("OpenAIリクエストに使用するモデルが選択されていません。"));
-        return generationClient.generateNarrative(apiKey, modelId, input, selection);
+        return generationClient.generate(apiKey, modelId, input, selection);
     }
 
     @Override

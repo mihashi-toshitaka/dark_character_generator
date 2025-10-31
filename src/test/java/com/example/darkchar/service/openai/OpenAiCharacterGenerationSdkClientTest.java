@@ -23,6 +23,7 @@ import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.WorldGenre;
+import com.example.darkchar.service.ai.ProviderGenerationResult;
 import com.openai.client.OpenAIClient;
 import com.openai.errors.BadRequestException;
 import com.openai.errors.OpenAIException;
@@ -72,9 +73,10 @@ class OpenAiCharacterGenerationSdkClientTest {
         when(choice.message()).thenReturn(message);
         when(message.content()).thenReturn(Optional.of("第一段落。\n第二段落。\nそして終わり。\n"));
 
-        String actual = client.generateNarrative("test-key", "gpt-test", input, selection);
+        ProviderGenerationResult actual = client.generate("test-key", "gpt-test", input, selection);
 
-        assertThat(actual).isEqualTo("第一段落。\n第二段落。\nそして終わり。");
+        assertThat(actual.narrative()).isEqualTo("第一段落。\n第二段落。\nそして終わり。");
+        assertThat(actual.prompt()).hasValue("PROMPT");
 
         verify(chatCompletionService, times(1)).create(any(ChatCompletionCreateParams.class));
         verifyNoMoreInteractions(chatCompletionService);
@@ -97,9 +99,10 @@ class OpenAiCharacterGenerationSdkClientTest {
         when(choice.message()).thenReturn(message);
         when(message.content()).thenReturn(Optional.of("最初の行。\n次の行。\n"));
 
-        String actual = client.generateNarrative("test-key", "gpt-test", input, selection);
+        ProviderGenerationResult actual = client.generate("test-key", "gpt-test", input, selection);
 
-        assertThat(actual).isEqualTo("最初の行。\n次の行。");
+        assertThat(actual.narrative()).isEqualTo("最初の行。\n次の行。");
+        assertThat(actual.prompt()).hasValue("PROMPT");
 
         ArgumentCaptor<ChatCompletionCreateParams> requestCaptor = ArgumentCaptor
                 .forClass(ChatCompletionCreateParams.class);
@@ -120,7 +123,7 @@ class OpenAiCharacterGenerationSdkClientTest {
 
         when(chatCompletionService.create(any(ChatCompletionCreateParams.class))).thenThrow(exception);
 
-        assertThatThrownBy(() -> client.generateNarrative("test-key", "gpt-test", input, selection))
+        assertThatThrownBy(() -> client.generate("test-key", "gpt-test", input, selection))
                 .isInstanceOf(OpenAiIntegrationException.class)
                 .hasMessageContaining("OpenAI API呼び出しに失敗しました。");
     }
