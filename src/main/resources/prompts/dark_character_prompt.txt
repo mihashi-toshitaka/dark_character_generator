@@ -5,9 +5,6 @@
 [世界観ジャンル]
 {{worldGenre}}
 
-[モード]
-{{mode}}
-
 {{characterAttributesSection}}{{traitFreeTextSection}}[闇堕ち前の立ち位置]
 {{protagonistAlignmentSection}}
 

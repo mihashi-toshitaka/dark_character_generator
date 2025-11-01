@@ -46,7 +46,6 @@ public class PromptTemplateRenderer {
     public String render(CharacterInput input, DarknessSelection selection) {
         Map<String, String> placeholders = Map.of(
                 "worldGenre", getWorldGenreName(input),
-                "mode", toModeLabel(input.mode()),
                 "characterAttributesSection", buildCharacterAttributesSection(input),
                 "traitFreeTextSection", buildTraitFreeTextSection(input),
                 "protagonistAlignmentSection", buildProtagonistAlignmentSection(input),
@@ -174,19 +173,6 @@ public class PromptTemplateRenderer {
      */
     private String getWorldGenreName(CharacterInput input) {
         return input.worldGenre() != null ? input.worldGenre().name() : "";
-    }
-
-    /**
-     * 入力モードを表示用ラベルへ変換します。
-     *
-     * @param mode 入力モード
-     * @return 表示名
-     */
-    private String toModeLabel(InputMode mode) {
-        if (mode == null) {
-            return "";
-        }
-        return mode == InputMode.AUTO ? "オート" : "セミオート";
     }
 
     /**
