@@ -20,6 +20,7 @@ import org.mockito.ArgumentCaptor;
 import com.example.darkchar.domain.AttributeCategory;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
+import com.example.darkchar.domain.DarknessPreset;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.WorldGenre;
@@ -167,7 +168,7 @@ class OpenAiCharacterGenerationSdkClientTest {
         return new DarknessSelection(
                 Map.of(AttributeCategory.MINDSET,
                         List.of(new AttributeOption(2L, AttributeCategory.MINDSET, "復讐心", "復讐に燃える"))),
-                3);
+                DarknessPreset.HEAVY);
     }
 
     /**

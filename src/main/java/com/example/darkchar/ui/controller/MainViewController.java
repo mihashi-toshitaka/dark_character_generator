@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import com.example.darkchar.domain.AttributeCategory;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
+import com.example.darkchar.domain.DarknessPreset;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
@@ -92,6 +93,9 @@ public class MainViewController {
     private Label darknessValueLabel;
 
     @FXML
+    private Label darknessDescriptionLabel;
+
+    @FXML
     private TextArea freeTextArea;
 
     @FXML
@@ -140,22 +144,7 @@ public class MainViewController {
 
         setupProtagonistBiasSlider();
 
-        darknessSlider.setMin(10);
-        darknessSlider.setMax(300);
-        darknessSlider.setMajorTickUnit(10);
-        darknessSlider.setMinorTickCount(0);
-        darknessSlider.setSnapToTicks(true);
-        darknessSlider.setBlockIncrement(10);
-        darknessSlider.setValue(100);
-        darknessValueLabel.setText(formatPercent(normalizeDarknessValue(darknessSlider.getValue())));
-        darknessSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            int normalized = normalizeDarknessValue(newVal.doubleValue());
-            if (normalized != Math.round(newVal.doubleValue())) {
-                darknessSlider.setValue(normalized);
-                return;
-            }
-            darknessValueLabel.setText(formatPercent(normalized));
-        });
+        setupDarknessSlider();
 
         worldGenreComboBox.setItems(FXCollections.observableArrayList(attributeQueryService.loadWorldGenres()));
         worldGenreComboBox.setConverter(new StringConverter<>() {
@@ -315,7 +304,7 @@ public class MainViewController {
 
             DarknessSelection selection = new DarknessSelection(
                     darknessSelections,
-                    normalizeDarknessValue(darknessSlider.getValue()));
+                    getDarknessPreset(darknessSlider.getValue()));
 
             runGenerationTask(input, selection);
         } catch (IllegalArgumentException ex) {
@@ -435,31 +424,36 @@ public class MainViewController {
         }
     }
 
-    /**
-     * スライダー値を 10% 刻みに補正します。
-     *
-     * @param value スライダー値
-     * @return 正規化した値
-     */
-    private int normalizeDarknessValue(double value) {
-        int normalized = (int) Math.round(value / 10.0) * 10;
-        if (normalized < 10) {
-            return 10;
-        }
-        if (normalized > 300) {
-            return 300;
-        }
-        return normalized;
+    private void setupDarknessSlider() {
+        DarknessPreset defaultPreset = DarknessPreset.getDefault();
+        darknessSlider.setMin(DarknessPreset.minValue());
+        darknessSlider.setMax(DarknessPreset.maxValue());
+        darknessSlider.setMajorTickUnit(50);
+        darknessSlider.setMinorTickCount(0);
+        darknessSlider.setSnapToTicks(true);
+        darknessSlider.setBlockIncrement(50);
+        darknessSlider.setValue(defaultPreset.getValue());
+        updateDarknessLabels(defaultPreset);
+
+        darknessSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            DarknessPreset preset = getDarknessPreset(newVal.doubleValue());
+            if (Math.abs(newVal.doubleValue() - preset.getValue()) > 0.0001) {
+                darknessSlider.setValue(preset.getValue());
+                return;
+            }
+            updateDarknessLabels(preset);
+        });
     }
 
-    /**
-     * 数値をパーセント表示にします。
-     *
-     * @param value 値
-     * @return パーセント表記
-     */
-    private String formatPercent(int value) {
-        return value + "%";
+    private void updateDarknessLabels(DarknessPreset preset) {
+        darknessValueLabel.setText(preset.formatValueWithLabel());
+        if (darknessDescriptionLabel != null) {
+            darknessDescriptionLabel.setText(preset.getDescription());
+        }
+    }
+
+    private DarknessPreset getDarknessPreset(double value) {
+        return DarknessPreset.closestTo(value);
     }
 
     /**

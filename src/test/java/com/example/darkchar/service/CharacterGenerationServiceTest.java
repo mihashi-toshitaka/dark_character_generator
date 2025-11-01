@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import com.example.darkchar.domain.AttributeCategory;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
+import com.example.darkchar.domain.DarknessPreset;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
@@ -62,7 +63,7 @@ class CharacterGenerationServiceTest {
         assertThat(character.narrative()).contains("中世ダークファンタジー");
         assertThat(character.narrative()).contains("復讐心");
         assertThat(character.narrative()).contains("白髪化");
-        assertThat(character.narrative()).contains("闇堕ち度: 40%");
+        assertThat(character.narrative()).contains("闇堕ち度: 150%（重め）");
     }
 
     /**
@@ -140,7 +141,7 @@ class CharacterGenerationServiceTest {
                 List.of(new AttributeOption(10L, AttributeCategory.MOTIVE, "復讐心", "復讐")),
                 AttributeCategory.APPEARANCE,
                 List.of(new AttributeOption(20L, AttributeCategory.APPEARANCE, "白髪化", "白髪化")));
-        return new DarknessSelection(darkness, 40);
+        return new DarknessSelection(darkness, DarknessPreset.HEAVY);
     }
 
     /**
