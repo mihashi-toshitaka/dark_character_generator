@@ -15,10 +15,16 @@ import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.WorldGenre;
 
+/**
+ * {@link PromptTemplateRenderer} が期待通りにテンプレートを展開することを検証します。
+ */
 class PromptTemplateRendererTest {
 
     private final PromptTemplateRenderer renderer = new PromptTemplateRenderer(new DefaultResourceLoader());
 
+    /**
+     * 任意セクションがすべて出力されるケースを確認します。
+     */
     @Test
     void renderIncludesOptionalSections() {
         CharacterInput input = new CharacterInput(
@@ -74,6 +80,9 @@ class PromptTemplateRendererTest {
         assertThat(actual).isEqualTo(expected);
     }
 
+    /**
+     * 任意セクションが空の場合に省略されることを確認します。
+     */
     @Test
     void renderOmitsOptionalSectionsWhenAbsent() {
         CharacterInput input = new CharacterInput(

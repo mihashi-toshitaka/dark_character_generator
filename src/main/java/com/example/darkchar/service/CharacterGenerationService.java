@@ -26,6 +26,9 @@ import com.example.darkchar.service.ai.ProviderGenerationResult;
 import com.example.darkchar.service.ai.ProviderType;
 import com.example.darkchar.service.openai.OpenAiIntegrationException;
 
+/**
+ * キャラクター生成ロジックをまとめたサービスです。
+ */
 @Service
 public class CharacterGenerationService {
 
@@ -34,16 +37,37 @@ public class CharacterGenerationService {
     private final AiProviderContextStore providerContextStore;
     private final CharacterGenerationStrategyRegistry strategyRegistry;
 
+    /**
+     * 依存サービスを注入します。
+     *
+     * @param providerContextStore プロバイダ設定ストア
+     * @param strategyRegistry     プロバイダレジストリ
+     */
     public CharacterGenerationService(AiProviderContextStore providerContextStore,
             CharacterGenerationStrategyRegistry strategyRegistry) {
         this.providerContextStore = providerContextStore;
         this.strategyRegistry = strategyRegistry;
     }
 
+    /**
+     * アクティブなプロバイダでキャラクターを生成します。
+     *
+     * @param input             ユーザー入力
+     * @param darknessSelection 闇堕ち選択
+     * @return 生成結果
+     */
     public GenerationResult generate(CharacterInput input, DarknessSelection darknessSelection) {
         return generate(input, darknessSelection, providerContextStore.getActiveProviderType());
     }
 
+    /**
+     * 指定したプロバイダを用いてキャラクターを生成します。
+     *
+     * @param input             ユーザー入力
+     * @param darknessSelection 闇堕ち選択
+     * @param providerType      利用するプロバイダ
+     * @return 生成結果
+     */
     public GenerationResult generate(CharacterInput input, DarknessSelection darknessSelection,
             ProviderType providerType) {
         validate(input, darknessSelection);
@@ -94,12 +118,29 @@ public class CharacterGenerationService {
         return buildResult(input, darknessSelection, narrative, usedProvider, warning, prompt);
     }
 
+    /**
+     * 生成内容を {@link GenerationResult} にまとめます。
+     *
+     * @param input             入力情報
+     * @param darknessSelection 闇堕ち選択
+     * @param narrative         生成テキスト
+     * @param usedProvider      プロバイダ利用有無
+     * @param warning           警告メッセージ
+     * @param prompt            使用プロンプト
+     * @return 変換した結果
+     */
     private GenerationResult buildResult(CharacterInput input, DarknessSelection darknessSelection, String narrative,
             boolean usedProvider, Optional<String> warning, Optional<String> prompt) {
         GeneratedCharacter character = new GeneratedCharacter(input, darknessSelection, narrative, Instant.now());
         return new GenerationResult(character, usedProvider, warning, prompt);
     }
 
+    /**
+     * 入力内容を検証します。
+     *
+     * @param input             入力情報
+     * @param darknessSelection 闇堕ち選択
+     */
     private void validate(CharacterInput input, DarknessSelection darknessSelection) {
         if (input.worldGenre() == null) {
             throw new IllegalArgumentException("世界観ジャンルを選択してください。");
@@ -117,6 +158,13 @@ public class CharacterGenerationService {
         }
     }
 
+    /**
+     * ローカル生成用の文章を作成します。
+     *
+     * @param input             入力情報
+     * @param darknessSelection 闇堕ち選択
+     * @return 生成した文章
+     */
     private String buildNarrative(CharacterInput input, DarknessSelection darknessSelection) {
         StringBuilder builder = new StringBuilder();
         builder.append("【闇堕ちキャラクター概要】\n");
@@ -161,6 +209,13 @@ public class CharacterGenerationService {
         return builder.toString();
     }
 
+    /**
+     * 物語部分の文章を構築します。
+     *
+     * @param input             入力情報
+     * @param darknessSelection 闇堕ち選択
+     * @return 生成した段落
+     */
     private String buildStoryParagraph(CharacterInput input, DarknessSelection darknessSelection) {
         List<String> highlights = new ArrayList<>();
         for (Map.Entry<AttributeCategory, List<AttributeOption>> entry : darknessSelection.selections().entrySet()) {
@@ -183,6 +238,12 @@ public class CharacterGenerationService {
                 formatPercent(darknessSelection.darknessLevel()));
     }
 
+    /**
+     * パーセント表記へ変換します。
+     *
+     * @param value 数値
+     * @return パーセント文字列
+     */
     private String formatPercent(int value) {
         return value + "%";
     }

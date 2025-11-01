@@ -39,6 +39,11 @@ public class OpenAiModelCatalogClient {
 
     private final OpenAiClientFactory clientFactory;
 
+    /**
+     * クライアントファクトリを注入します。
+     *
+     * @param clientFactory OpenAI クライアントファクトリ
+     */
     public OpenAiModelCatalogClient(OpenAiClientFactory clientFactory) {
         this.clientFactory = clientFactory;
     }
@@ -73,6 +78,12 @@ public class OpenAiModelCatalogClient {
         }
     }
 
+    /**
+     * 使用可能なモデルだけを抽出します。
+     *
+     * @param modelIds OpenAI が返したモデルID一覧
+     * @return 利用候補のモデルID
+     */
     List<String> filterAllowedModels(List<String> modelIds) {
         return modelIds.stream()
                 .filter(Objects::nonNull)

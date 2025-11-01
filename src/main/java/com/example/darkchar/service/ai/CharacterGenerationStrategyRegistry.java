@@ -16,6 +16,11 @@ public class CharacterGenerationStrategyRegistry {
 
     private final Map<ProviderType, CharacterGenerationProvider> providers;
 
+    /**
+     * 利用可能なプロバイダを登録します。
+     *
+     * @param providers プロバイダ一覧
+     */
     public CharacterGenerationStrategyRegistry(List<CharacterGenerationProvider> providers) {
         Map<ProviderType, CharacterGenerationProvider> map = new EnumMap<>(ProviderType.class);
         for (CharacterGenerationProvider provider : providers) {
@@ -24,6 +29,12 @@ public class CharacterGenerationStrategyRegistry {
         this.providers = Collections.unmodifiableMap(map);
     }
 
+    /**
+     * 種別に応じたプロバイダを取得します。
+     *
+     * @param type プロバイダ種別
+     * @return 対応するプロバイダ
+     */
     public Optional<CharacterGenerationProvider> findProvider(ProviderType type) {
         if (type == null) {
             return Optional.empty();
@@ -31,6 +42,11 @@ public class CharacterGenerationStrategyRegistry {
         return Optional.ofNullable(providers.get(type));
     }
 
+    /**
+     * 登録済みのプロバイダ種別一覧を返します。
+     *
+     * @return プロバイダ種別
+     */
     public List<ProviderType> getRegisteredProviderTypes() {
         return List.copyOf(providers.keySet());
     }

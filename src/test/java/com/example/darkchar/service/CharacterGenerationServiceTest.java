@@ -23,6 +23,9 @@ import com.example.darkchar.service.ai.ProviderConfigurationStatus;
 import com.example.darkchar.service.ai.ProviderGenerationResult;
 import com.example.darkchar.service.ai.ProviderType;
 
+/**
+ * {@link CharacterGenerationService} の主要な挙動を検証します。
+ */
 class CharacterGenerationServiceTest {
 
     private CharacterGenerationService service;
@@ -30,6 +33,9 @@ class CharacterGenerationServiceTest {
     private StubProvider openAiProvider;
     private StubProvider localProvider;
 
+    /**
+     * テストごとにサービスとスタブを初期化します。
+     */
     @BeforeEach
     void setUp() {
         contextStore = new AiProviderContextStore();
@@ -40,6 +46,9 @@ class CharacterGenerationServiceTest {
         service = new CharacterGenerationService(contextStore, registry);
     }
 
+    /**
+     * プロバイダ未設定時にローカル生成へフォールバックすることを確認します。
+     */
     @Test
     void generateShouldBuildNarrativeWhenProviderUnavailable() {
         openAiProvider.configurationStatus = ProviderConfigurationStatus.notReady();
@@ -56,6 +65,9 @@ class CharacterGenerationServiceTest {
         assertThat(character.narrative()).contains("闇堕ち度: 40%");
     }
 
+    /**
+     * 設定済みプロバイダが利用されることを確認します。
+     */
     @Test
     void generateShouldUseProviderWhenConfigured() {
         openAiProvider.configurationStatus = ProviderConfigurationStatus.onReady();
@@ -70,6 +82,9 @@ class CharacterGenerationServiceTest {
         assertThat(result.prompt()).hasValue("generated prompt");
     }
 
+    /**
+     * プロバイダ失敗時に警告付きでフォールバックすることを確認します。
+     */
     @Test
     void generateShouldFallbackWithWarningWhenProviderFails() {
         openAiProvider.configurationStatus = ProviderConfigurationStatus.onReady();
@@ -83,6 +98,9 @@ class CharacterGenerationServiceTest {
         assertThat(result.prompt()).isEmpty();
     }
 
+    /**
+     * プロバイダを切り替えて利用できることを確認します。
+     */
     @Test
     void generateShouldAllowSwitchingProviders() {
         localProvider.configurationStatus = ProviderConfigurationStatus.onReady();
@@ -96,6 +114,11 @@ class CharacterGenerationServiceTest {
         assertThat(result.prompt()).hasValue("local prompt");
     }
 
+    /**
+     * テストで使用する入力データを組み立てます。
+     *
+     * @return キャラクター入力
+     */
     private CharacterInput sampleInput() {
         return new CharacterInput(
                 InputMode.SEMI_AUTO,
@@ -106,6 +129,11 @@ class CharacterGenerationServiceTest {
                 "親友を救いたい");
     }
 
+    /**
+     * テストで使用する闇堕ち選択肢を組み立てます。
+     *
+     * @return 闇堕ち選択
+     */
     private DarknessSelection sampleSelection() {
         Map<AttributeCategory, List<AttributeOption>> darkness = Map.of(
                 AttributeCategory.MOTIVE,
@@ -115,6 +143,9 @@ class CharacterGenerationServiceTest {
         return new DarknessSelection(darkness, 40);
     }
 
+    /**
+     * テスト用の簡易プロバイダです。
+     */
     private static class StubProvider implements CharacterGenerationProvider {
 
         private final ProviderType providerType;
@@ -124,26 +155,36 @@ class CharacterGenerationServiceTest {
         private String generatedPrompt = "";
         private RuntimeException exceptionToThrow;
 
+        /**
+         * プロバイダ種別と表示名で初期化します。
+         *
+         * @param providerType プロバイダ種別
+         * @param displayName  表示名
+         */
         StubProvider(ProviderType providerType, String displayName) {
             this.providerType = providerType;
             this.displayName = displayName;
         }
 
+        /** {@inheritDoc} */
         @Override
         public ProviderType getProviderType() {
             return providerType;
         }
 
+        /** {@inheritDoc} */
         @Override
         public String getDisplayName() {
             return displayName;
         }
 
+        /** {@inheritDoc} */
         @Override
         public ProviderConfigurationStatus assessConfiguration(AiProviderContext context) {
             return configurationStatus;
         }
 
+        /** {@inheritDoc} */
         @Override
         public ProviderGenerationResult generate(AiProviderContext context, CharacterInput input, DarknessSelection selection) {
             if (exceptionToThrow != null) {

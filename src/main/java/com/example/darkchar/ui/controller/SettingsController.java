@@ -56,12 +56,21 @@ public class SettingsController {
 
     private Stage stage;
 
+    /**
+     * 設定ストアとレジストリを注入します。
+     *
+     * @param providerContextStore プロバイダ設定ストア
+     * @param strategyRegistry     プロバイダレジストリ
+     */
     public SettingsController(AiProviderContextStore providerContextStore,
             CharacterGenerationStrategyRegistry strategyRegistry) {
         this.providerContextStore = providerContextStore;
         this.strategyRegistry = strategyRegistry;
     }
 
+    /**
+     * 画面初期化時のセットアップを行います。
+     */
     @FXML
     public void initialize() {
         if (providerComboBox != null) {
@@ -103,6 +112,11 @@ public class SettingsController {
         refreshFromStore();
     }
 
+    /**
+     * 保存ボタン押下時の処理を行います。
+     *
+     * @param event 発生したイベント
+     */
     @FXML
     void handleSave(ActionEvent event) {
         ProviderType providerType = getCurrentProviderType();
@@ -147,11 +161,21 @@ public class SettingsController {
         closeStage();
     }
 
+    /**
+     * キャンセルボタン押下時の処理を行います。
+     *
+     * @param event 発生したイベント
+     */
     @FXML
     void handleCancel(ActionEvent event) {
         closeStage();
     }
 
+    /**
+     * クリアボタン押下時の処理を行います。
+     *
+     * @param event 発生したイベント
+     */
     @FXML
     void handleClear(ActionEvent event) {
         ProviderType providerType = getCurrentProviderType();
@@ -167,6 +191,11 @@ public class SettingsController {
         updateStatus(providerDisplayName(providerType) + "の設定をクリアしました。");
     }
 
+    /**
+     * モデル取得ボタン押下時の処理を行います。
+     *
+     * @param event 発生したイベント
+     */
     @FXML
     void handleLoadModels(ActionEvent event) {
         ProviderType providerType = getCurrentProviderType();
@@ -242,10 +271,18 @@ public class SettingsController {
         thread.start();
     }
 
+    /**
+     * 閉じ操作で利用するステージを設定します。
+     *
+     * @param stage 設定画面のステージ
+     */
     public void setStage(Stage stage) {
         this.stage = stage;
     }
 
+    /**
+     * ストアの内容で画面を更新します。
+     */
     public void refreshFromStore() {
         ProviderType providerType = providerContextStore.getActiveProviderType();
         if (providerComboBox != null) {
@@ -259,6 +296,11 @@ public class SettingsController {
         refreshForProvider(providerType);
     }
 
+    /**
+     * 指定プロバイダの情報で画面を更新します。
+     *
+     * @param providerType プロバイダ種別
+     */
     private void refreshForProvider(ProviderType providerType) {
         currentProviderType = providerType;
         AiProviderContext context = providerContextStore.getContext(providerType);
@@ -296,33 +338,62 @@ public class SettingsController {
                 : providerDisplayName(providerType) + "のAPIキーは未設定です。");
     }
 
+    /**
+     * 現在選択中のプロバイダを返します。
+     *
+     * @return プロバイダ種別
+     */
     private ProviderType getCurrentProviderType() {
         return currentProviderType == null ? providerContextStore.getActiveProviderType() : currentProviderType;
     }
 
+    /**
+     * 現在選択中のプロバイダ実装を取得します。
+     *
+     * @return プロバイダ実装
+     */
     private CharacterGenerationProvider getCurrentProvider() {
         ProviderType providerType = getCurrentProviderType();
         return strategyRegistry.findProvider(providerType).orElse(null);
     }
 
+    /**
+     * プロバイダの表示名を取得します。
+     *
+     * @param providerType プロバイダ種別
+     * @return 表示名
+     */
     private String providerDisplayName(ProviderType providerType) {
         return strategyRegistry.findProvider(providerType)
                 .map(CharacterGenerationProvider::getDisplayName)
                 .orElse(providerType.getDisplayName());
     }
 
+    /**
+     * 設定画面を閉じます。
+     */
     private void closeStage() {
         if (stage != null) {
             stage.close();
         }
     }
 
+    /**
+     * ステータス表示を更新します。
+     *
+     * @param message メッセージ
+     */
     private void updateStatus(String message) {
         if (statusLabel != null) {
             statusLabel.setText(message);
         }
     }
 
+    /**
+     * 警告ダイアログを表示します。
+     *
+     * @param message 表示メッセージ
+     */
     private void showWarning(String message) {
         Alert alert = new Alert(AlertType.WARNING);
         alert.setHeaderText(null);

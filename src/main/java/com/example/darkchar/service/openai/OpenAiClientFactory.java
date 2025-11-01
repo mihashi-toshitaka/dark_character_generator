@@ -6,17 +6,16 @@ import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 
 /**
- * Factory responsible for building {@link OpenAI} clients with a dynamically
- * provided API key.
+ * APIキーから OpenAI クライアントを生成するファクトリです。
  */
 @Component
 public class OpenAiClientFactory {
 
     /**
-     * Creates a new {@link OpenAI} client that is scoped to the provided API key.
+     * 指定された API キーで利用できるクライアントを生成します。
      *
-     * @param apiKey OpenAI API key
-     * @return configured client instance
+     * @param apiKey OpenAI の API キー
+     * @return 設定済みクライアント
      */
     public OpenAIClient createClient(String apiKey) {
         if (apiKey == null || apiKey.isBlank()) {

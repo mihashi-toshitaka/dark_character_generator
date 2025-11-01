@@ -26,12 +26,21 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
     private final OpenAiClientFactory clientFactory;
     private final PromptTemplateRenderer promptTemplateRenderer;
 
+    /**
+     * 依存コンポーネントを注入します。
+     *
+     * @param clientFactory OpenAI クライアントファクトリ
+     * @param promptTemplateRenderer プロンプト生成器
+     */
     public OpenAiCharacterGenerationSdkClient(OpenAiClientFactory clientFactory,
             PromptTemplateRenderer promptTemplateRenderer) {
         this.clientFactory = clientFactory;
         this.promptTemplateRenderer = promptTemplateRenderer;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ProviderGenerationResult generate(String apiKey, String modelId, CharacterInput input, DarknessSelection selection) {
         String normalizedModel = modelId == null ? null : modelId.trim();
@@ -75,6 +84,14 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
         throw new OpenAiIntegrationException("OpenAIレスポンスからテキストを取得できませんでした。");
     }
 
+    /**
+     * Chat Completions API へのリクエストを構築します。
+     *
+     * @param modelId            使用するモデルID
+     * @param prompt             送信するプロンプト
+     * @param includeTemperature 温度パラメータを含めるか
+     * @return 生成したパラメータ
+     */
     private ChatCompletionCreateParams buildRequest(String modelId, String prompt, boolean includeTemperature) {
         ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder()
                 .model(modelId)
@@ -86,6 +103,12 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
         return builder.build();
     }
 
+    /**
+     * レスポンスから最初のテキストを取り出します。
+     *
+     * @param chatCompletion OpenAI レスポンス
+     * @return 取得したテキスト
+     */
     private String extractText(ChatCompletion chatCompletion) {
         if (chatCompletion == null) {
             return null;
@@ -97,10 +120,21 @@ public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenera
                 .get();
     }
 
+    /**
+     * レスポンスのメタ情報をログへ出力します。
+     *
+     * @param chatCompletion OpenAI レスポンス
+     */
     private void logResponseMetadata(ChatCompletion chatCompletion) {
         logger.info("Received OpenAI response: " + chatCompletion.toString());
     }
 
+    /**
+     * 温度パラメータ未対応のエラーか判定します。
+     *
+     * @param ex OpenAI 例外
+     * @return 温度未対応なら true
+     */
     private boolean isTemperatureUnsupported(OpenAIException ex) {
         if (ex instanceof BadRequestException) {
             String message = ex.getMessage();

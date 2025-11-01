@@ -12,6 +12,9 @@ public record AiProviderContext(
         Optional<String> selectedModel,
         List<String> availableModels) {
 
+    /**
+     * 入力値を検証し正規化します。
+     */
     public AiProviderContext {
         if (providerType == null) {
             throw new IllegalArgumentException("providerType must not be null");

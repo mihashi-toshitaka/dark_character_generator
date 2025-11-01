@@ -18,6 +18,9 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * JSON ファイルから初期データを読み込みます。
+ */
 @Component
 public class JsonSeedLoader implements ApplicationRunner {
 
@@ -29,12 +32,23 @@ public class JsonSeedLoader implements ApplicationRunner {
     private final JdbcTemplate jdbcTemplate;
     private final ResourcePatternResolver resourcePatternResolver;
 
+    /**
+     * 依存コンポーネントを注入します。
+     *
+     * @param objectMapper JSON マッパー
+     * @param jdbcTemplate JDBC テンプレート
+     */
     public JsonSeedLoader(ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
         this.resourcePatternResolver = new PathMatchingResourcePatternResolver();
     }
 
+    /**
+     * アプリ起動時にデータを投入します。
+     *
+     * @param args 実行引数
+     */
     @Override
     public void run(ApplicationArguments args) throws Exception {
         long worldGenreCount = countRows("world_genre");
@@ -60,6 +74,11 @@ public class JsonSeedLoader implements ApplicationRunner {
         }
     }
 
+    /**
+     * 世界観ジャンルを登録します。
+     *
+     * @param worldGenres シードデータ
+     */
     private void insertWorldGenres(List<WorldGenreSeed> worldGenres) {
         if (worldGenres.isEmpty()) {
             return;
@@ -74,6 +93,11 @@ public class JsonSeedLoader implements ApplicationRunner {
         logger.info("Inserted {} world genres from JSON seed.", worldGenres.size());
     }
 
+    /**
+     * 属性データを登録します。
+     *
+     * @param attributeOptions シードデータ
+     */
     private void insertAttributeOptions(List<AttributeOptionSeed> attributeOptions) {
         if (attributeOptions.isEmpty()) {
             return;
@@ -88,6 +112,11 @@ public class JsonSeedLoader implements ApplicationRunner {
         logger.info("Inserted {} attribute options from JSON seed.", attributeOptions.size());
     }
 
+    /**
+     * 世界観ジャンルのシードを読み込みます。
+     *
+     * @return シードデータ
+     */
     private List<WorldGenreSeed> readWorldGenres() {
         Resource resource = new ClassPathResource(WORLD_GENRES_RESOURCE_PATH);
         if (!resource.exists()) {
@@ -103,6 +132,11 @@ public class JsonSeedLoader implements ApplicationRunner {
         }
     }
 
+    /**
+     * 属性シードをすべて読み込みます。
+     *
+     * @return シードデータ
+     */
     private List<AttributeOptionSeed> readAttributeOptions() {
         try {
             Resource[] resources = resourcePatternResolver.getResources(ATTRIBUTE_OPTIONS_RESOURCE_PATTERN);
@@ -127,6 +161,12 @@ public class JsonSeedLoader implements ApplicationRunner {
         }
     }
 
+    /**
+     * テーブル内の件数を取得します。
+     *
+     * @param tableName テーブル名
+     * @return 件数
+     */
     private long countRows(String tableName) {
         Long count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName, Long.class);
         return count != null ? count : 0L;

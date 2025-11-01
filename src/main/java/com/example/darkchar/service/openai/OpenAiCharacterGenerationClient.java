@@ -13,6 +13,7 @@ public interface OpenAiCharacterGenerationClient {
      * 入力情報を元にOpenAIへ問い合わせ、生成されたテキストを返します。
      *
      * @param apiKey    使用するAPIキー
+     * @param modelId   使用するモデルID
      * @param input     キャラクター入力
      * @param selection 闇堕ち選択情報
      * @return 生成されたテキスト

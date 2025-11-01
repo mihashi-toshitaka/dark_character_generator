@@ -15,11 +15,17 @@ import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
+/**
+ * JavaFX アプリケーションの起点となるクラスです。
+ */
 public class DarkCharacterGeneratorFxApp extends Application {
 
     private static final Logger logger = LoggerFactory.getLogger(DarkCharacterGeneratorFxApp.class);
     private ConfigurableApplicationContext context;
 
+    /**
+     * Spring コンテキストを初期化します。
+     */
     @Override
     public void init() {
         context = new SpringApplicationBuilder(DarkCharacterGeneratorApplication.class)
@@ -27,6 +33,12 @@ public class DarkCharacterGeneratorFxApp extends Application {
                 .run(getParameters().getRaw().toArray(new String[0]));
     }
 
+    /**
+     * メインウィンドウを表示します。
+     *
+     * @param stage メインステージ
+     * @throws Exception ロード失敗時
+     */
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/darkchar/ui/main-view.fxml"));
@@ -46,6 +58,9 @@ public class DarkCharacterGeneratorFxApp extends Application {
         stage.show();
     }
 
+    /**
+     * アプリケーションを終了します。
+     */
     @Override
     public void stop() {
         if (context != null) {
@@ -54,6 +69,11 @@ public class DarkCharacterGeneratorFxApp extends Application {
         Platform.exit();
     }
 
+    /**
+     * UI で日本語フォントが使えるよう設定します。
+     *
+     * @param scene 適用対象のシーン
+     */
     private void loadJapaneseFont(Scene scene) {
         // 任意CSS（あるなら読み込む）
         var stylesheetUrl = getClass().getResource("/com/example/darkchar/ui/application.css");
@@ -98,6 +118,13 @@ public class DarkCharacterGeneratorFxApp extends Application {
         logger.info("Font families (excerpt): {}", sampleFamilies);
     }
 
+    /**
+     * フォントを読み込みファミリ名を返します。
+     *
+     * @param cp   クラスパス
+     * @param size 読み込むサイズ
+     * @return ファミリ名
+     */
     private String loadFontAndGetFamily(String cp, double size) {
         try (var in = getClass().getResourceAsStream(cp)) {
             if (in == null) {

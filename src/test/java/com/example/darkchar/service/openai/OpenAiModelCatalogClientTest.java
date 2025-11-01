@@ -5,10 +5,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
+/**
+ * {@link OpenAiModelCatalogClient} のフィルタリングを検証します。
+ */
 class OpenAiModelCatalogClientTest {
 
     private final OpenAiModelCatalogClient client = new OpenAiModelCatalogClient(new OpenAiClientFactory());
 
+    /**
+     * GPT と O シリーズのみ残すことを確認します。
+     */
     @Test
     void filterAllowedModelsKeepsAllowedPrefixes() {
         List<String> filtered = client.filterAllowedModels(List.of(
@@ -29,6 +36,9 @@ class OpenAiModelCatalogClientTest {
                 "o12-large");
     }
 
+    /**
+     * null 値が除外されることを確認します。
+     */
     @Test
     void filterAllowedModelsIgnoresNullEntries() {
         List<String> filtered = client.filterAllowedModels(List.of(
@@ -41,6 +51,9 @@ class OpenAiModelCatalogClientTest {
                 "gpt-4o");
     }
 
+    /**
+     * 日付サフィックス付きモデルが除外されることを確認します。
+     */
     @Test
     void filterAllowedModelsRemovesDateSuffixedEntries() {
         List<String> filtered = client.filterAllowedModels(List.of(

@@ -16,6 +16,9 @@ import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.InputMode;
 
+/**
+ * テンプレートを用いて OpenAI へのプロンプトを生成します。
+ */
 @Component
 public class PromptTemplateRenderer {
 
@@ -23,10 +26,22 @@ public class PromptTemplateRenderer {
 
     private final String template;
 
+    /**
+     * テンプレートファイルを読み込みます。
+     *
+     * @param resourceLoader リソースローダ
+     */
     public PromptTemplateRenderer(ResourceLoader resourceLoader) {
         this.template = loadTemplate(resourceLoader);
     }
 
+    /**
+     * 入力内容をテンプレートに埋め込みます。
+     *
+     * @param input     キャラクター入力
+     * @param selection 闇堕ち選択
+     * @return レンダリング済みプロンプト
+     */
     public String render(CharacterInput input, DarknessSelection selection) {
         Map<String, String> placeholders = Map.of(
                 "worldGenre", getWorldGenreName(input),
@@ -41,6 +56,12 @@ public class PromptTemplateRenderer {
         return renderTemplate(placeholders);
     }
 
+    /**
+     * キャラクター属性セクションを組み立てます。
+     *
+     * @param input キャラクター入力
+     * @return セクション文字列
+     */
     private String buildCharacterAttributesSection(CharacterInput input) {
         if (input.mode() != InputMode.SEMI_AUTO) {
             return "";
@@ -62,10 +83,22 @@ public class PromptTemplateRenderer {
         return "[キャラクター属性]\n" + lines + "\n\n";
     }
 
+    /**
+     * 属性メモのセクションを組み立てます。
+     *
+     * @param input キャラクター入力
+     * @return セクション文字列
+     */
     private String buildTraitFreeTextSection(CharacterInput input) {
         return formatFreeTextSection("[キャラクター属性メモ]", input.traitFreeText());
     }
 
+    /**
+     * 闇堕ちカテゴリの行を構築します。
+     *
+     * @param selection 闇堕ち選択
+     * @return セクション文字列
+     */
     private String buildDarknessSelections(DarknessSelection selection) {
         if (selection == null || selection.selections() == null || selection.selections().isEmpty()) {
             return "";
@@ -85,10 +118,22 @@ public class PromptTemplateRenderer {
         return lines + "\n\n";
     }
 
+    /**
+     * 闇堕ちメモのセクションを組み立てます。
+     *
+     * @param input キャラクター入力
+     * @return セクション文字列
+     */
     private String buildDarknessFreeTextSection(CharacterInput input) {
         return formatFreeTextSection("[闇堕ちメモ]", input.darknessFreeText());
     }
 
+    /**
+     * テンプレートファイルを読み込みます。
+     *
+     * @param resourceLoader リソースローダ
+     * @return テンプレート文字列
+     */
     private String loadTemplate(ResourceLoader resourceLoader) {
         Resource resource = resourceLoader.getResource(TEMPLATE_LOCATION);
         try (InputStream inputStream = resource.getInputStream()) {
@@ -98,14 +143,32 @@ public class PromptTemplateRenderer {
         }
     }
 
+    /**
+     * 数値をパーセント表記にします。
+     *
+     * @param value 数値
+     * @return パーセント文字列
+     */
     private String formatPercent(int value) {
         return value + "%";
     }
 
+    /**
+     * 世界観名を取得します。
+     *
+     * @param input キャラクター入力
+     * @return 世界観名
+     */
     private String getWorldGenreName(CharacterInput input) {
         return input.worldGenre() != null ? input.worldGenre().name() : "";
     }
 
+    /**
+     * 入力モードを表示用ラベルへ変換します。
+     *
+     * @param mode 入力モード
+     * @return 表示名
+     */
     private String toModeLabel(InputMode mode) {
         if (mode == null) {
             return "";
@@ -113,6 +176,12 @@ public class PromptTemplateRenderer {
         return mode == InputMode.AUTO ? "オート" : "セミオート";
     }
 
+    /**
+     * テンプレート中のプレースホルダを置き換えます。
+     *
+     * @param placeholders 差し込み値
+     * @return 置換後の文字列
+     */
     private String renderTemplate(Map<String, String> placeholders) {
         String rendered = template;
         for (var entry : placeholders.entrySet()) {
@@ -121,6 +190,12 @@ public class PromptTemplateRenderer {
         return rendered;
     }
 
+    /**
+     * 属性1件をフォーマットします。
+     *
+     * @param option 属性
+     * @return 表示文字列
+     */
     private String formatCharacterTrait(AttributeOption option) {
         if (option == null || !hasText(option.name())) {
             return "";
@@ -132,6 +207,12 @@ public class PromptTemplateRenderer {
         return line.toString();
     }
 
+    /**
+     * 属性名だけを連結します。
+     *
+     * @param options 属性一覧
+     * @return カンマ区切り文字列
+     */
     private String formatOptionNames(List<AttributeOption> options) {
         if (options == null || options.isEmpty()) {
             return "";
@@ -146,6 +227,12 @@ public class PromptTemplateRenderer {
         return joiner.length() == 0 ? "" : joiner.toString();
     }
 
+    /**
+     * 属性から名称を抽出します。
+     *
+     * @param option 属性
+     * @return 属性名
+     */
     private String extractOptionName(AttributeOption option) {
         if (option == null || !hasText(option.name())) {
             return "";
@@ -153,6 +240,13 @@ public class PromptTemplateRenderer {
         return option.name().trim();
     }
 
+    /**
+     * 任意テキストセクションをフォーマットします。
+     *
+     * @param heading 見出し
+     * @param freeText 本文
+     * @return セクション文字列
+     */
     private String formatFreeTextSection(String heading, String freeText) {
         if (!hasText(freeText)) {
             return "";
@@ -160,6 +254,12 @@ public class PromptTemplateRenderer {
         return heading + "\n" + freeText.trim() + "\n\n";
     }
 
+    /**
+     * テキストが存在するか判定します。
+     *
+     * @param value 文字列
+     * @return 有効なら true
+     */
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }

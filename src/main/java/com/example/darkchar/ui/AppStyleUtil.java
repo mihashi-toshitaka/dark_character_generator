@@ -15,24 +15,46 @@ public final class AppStyleUtil {
         // no-op
     }
 
+    /**
+     * UI 用スタイルシートの URL を保存します。
+     *
+     * @param url スタイルシート URL
+     */
     public static void setUiStylesheetUrl(String url) {
         uiStylesheetUrl = url;
     }
 
+    /**
+     * 保存されたスタイルシート URL を取得します。
+     *
+     * @return スタイルシート URL
+     */
     public static String getUiStylesheetUrl() {
         return uiStylesheetUrl;
     }
 
+    /**
+     * 共通で使用するフォントファミリを設定します。
+     *
+     * @param family フォントファミリ名
+     */
     public static void setFontFamily(String family) {
         fontFamily = family;
     }
 
+    /**
+     * 保存されたフォントファミリを取得します。
+     *
+     * @return フォントファミリ名
+     */
     public static String getFontFamily() {
         return fontFamily;
     }
 
     /**
-     * Alert の DialogPane にアプリの stylesheet とフォントを適用するユーティリティ。
+     * Alert の DialogPane にアプリの stylesheet とフォントを適用します。
+     *
+     * @param alert 対象のアラート
      */
     public static void applyToAlert(Alert alert) {
         if (alert == null)

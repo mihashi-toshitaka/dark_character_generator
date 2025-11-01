@@ -50,6 +50,9 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
+/**
+ * メイン画面の操作をまとめるコントローラです。
+ */
 @Component
 public class MainViewController {
 
@@ -105,6 +108,14 @@ public class MainViewController {
     private Stage settingsStage;
     private SettingsController settingsController;
 
+    /**
+     * 画面で利用するサービスを注入します。
+     *
+     * @param attributeQueryService 属性取得サービス
+     * @param characterGenerationService 生成サービス
+     * @param providerContextStore プロバイダ設定ストア
+     * @param applicationContext Spring アプリケーションコンテキスト
+     */
     public MainViewController(AttributeQueryService attributeQueryService,
             CharacterGenerationService characterGenerationService,
             AiProviderContextStore providerContextStore,
@@ -115,6 +126,9 @@ public class MainViewController {
         this.applicationContext = applicationContext;
     }
 
+    /**
+     * 画面初期化時に各コンポーネントをセットアップします。
+     */
     @FXML
     public void initialize() {
         autoModeButton.setToggleGroup(modeToggleGroup);
@@ -173,6 +187,9 @@ public class MainViewController {
         updateMode();
     }
 
+    /**
+     * キャラクター属性のチェックボックスを構築します。
+     */
     private void populateCharacterTraits() {
         characterTraitContainer.getChildren().clear();
         List<AttributeOption> traits = attributeQueryService.loadCharacterTraits();
@@ -185,6 +202,9 @@ public class MainViewController {
         }
     }
 
+    /**
+     * 闇堕ちカテゴリのチェックボックスを構築します。
+     */
     private void populateDarknessOptions() {
         darknessCategoryContainer.getChildren().clear();
         darknessCheckBoxes.clear();
@@ -210,6 +230,9 @@ public class MainViewController {
         }
     }
 
+    /**
+     * 選択モードに応じて入力可能項目を切り替えます。
+     */
     private void updateMode() {
         boolean semiAuto = semiAutoModeButton.isSelected();
         characterTraitContainer.setDisable(!semiAuto);
@@ -225,6 +248,11 @@ public class MainViewController {
         }
     }
 
+    /**
+     * 生成ボタン押下時の処理を行います。
+     *
+     * @param event 発生したイベント
+     */
     @FXML
     void handleGenerate(ActionEvent event) {
         try {
@@ -265,6 +293,12 @@ public class MainViewController {
         }
     }
 
+    /**
+     * 結果表示ウィンドウを表示します。
+     *
+     * @param generatedCharacter 生成キャラクター
+     * @param prompt 使用したプロンプト
+     */
     private void showResultWindow(GeneratedCharacter generatedCharacter, Optional<String> prompt) {
         try {
             if (resultStage == null) {
@@ -308,6 +342,12 @@ public class MainViewController {
         }
     }
 
+    /**
+     * 非同期でキャラクター生成処理を実行します。
+     *
+     * @param input 入力情報
+     * @param selection 闇堕ち選択
+     */
     private void runGenerationTask(CharacterInput input, DarknessSelection selection) {
         ProviderType providerType = providerContextStore.getActiveProviderType();
         Task<GenerationResult> task = new Task<>() {
@@ -352,12 +392,23 @@ public class MainViewController {
         thread.start();
     }
 
+    /**
+     * シーン全体のカーソルを変更します。
+     *
+     * @param cursor 設定するカーソル
+     */
     private void setSceneCursor(Cursor cursor) {
         if (generateButton != null && generateButton.getScene() != null) {
             generateButton.getScene().setCursor(cursor);
         }
     }
 
+    /**
+     * スライダー値を 10% 刻みに補正します。
+     *
+     * @param value スライダー値
+     * @return 正規化した値
+     */
     private int normalizeDarknessValue(double value) {
         int normalized = (int) Math.round(value / 10.0) * 10;
         if (normalized < 10) {
@@ -369,10 +420,21 @@ public class MainViewController {
         return normalized;
     }
 
+    /**
+     * 数値をパーセント表示にします。
+     *
+     * @param value 値
+     * @return パーセント表記
+     */
     private String formatPercent(int value) {
         return value + "%";
     }
 
+    /**
+     * 設定ボタン押下時に設定ダイアログを表示します。
+     *
+     * @param event 発生したイベント
+     */
     @FXML
     void handleOpenSettings(ActionEvent event) {
         try {
@@ -426,6 +488,12 @@ public class MainViewController {
         }
     }
 
+    /**
+     * 共通スタイルを適用したアラートを表示します。
+     *
+     * @param type    アラート種別
+     * @param message 表示メッセージ
+     */
     private void showAlert(Alert.AlertType type, String message) {
         Alert alert = new Alert(type);
         // オーナーを設定してダイアログ表示を安定させる

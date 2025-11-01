@@ -16,6 +16,9 @@ import javafx.scene.layout.Region;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+/**
+ * 生成結果表示ダイアログのコントローラです。
+ */
 @Component
 public class CharacterResultController {
 
@@ -28,10 +31,21 @@ public class CharacterResultController {
     private Stage stage;
     private String promptText;
 
+    /**
+     * ダイアログのステージを設定します。
+     *
+     * @param stage 表示ステージ
+     */
     public void setStage(Stage stage) {
         this.stage = stage;
     }
 
+    /**
+     * 画面に表示する結果を設定します。
+     *
+     * @param generatedCharacter 生成キャラクター
+     * @param prompt 使用プロンプト
+     */
     public void setResult(GeneratedCharacter generatedCharacter, Optional<String> prompt) {
         if (generatedCharacter == null) {
             resultTextArea.clear();
@@ -44,6 +58,11 @@ public class CharacterResultController {
         }
     }
 
+    /**
+     * 閉じるボタン押下時の処理を行います。
+     *
+     * @param event 発生したイベント
+     */
     @FXML
     void handleClose(ActionEvent event) {
         if (stage != null) {
@@ -51,6 +70,11 @@ public class CharacterResultController {
         }
     }
 
+    /**
+     * プロンプト表示ボタン押下時の処理を行います。
+     *
+     * @param event 発生したイベント
+     */
     @FXML
     void handleShowPrompt(ActionEvent event) {
         if (promptText == null || promptText.isBlank()) {

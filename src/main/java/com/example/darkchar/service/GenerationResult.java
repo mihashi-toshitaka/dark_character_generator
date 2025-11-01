@@ -18,14 +18,36 @@ public record GenerationResult(GeneratedCharacter generatedCharacter, boolean us
         prompt = prompt == null ? Optional.empty() : prompt;
     }
 
+    /**
+     * プロンプトなしで結果を生成します。
+     *
+     * @param generatedCharacter 生成キャラクター
+     * @param usedProvider       プロバイダ利用有無
+     * @param warningMessage     警告メッセージ
+     */
     public GenerationResult(GeneratedCharacter generatedCharacter, boolean usedProvider, Optional<String> warningMessage) {
         this(generatedCharacter, usedProvider, warningMessage, Optional.empty());
     }
 
+    /**
+     * 文字列警告のみ指定して結果を生成します。
+     *
+     * @param generatedCharacter 生成キャラクター
+     * @param usedProvider       プロバイダ利用有無
+     * @param warningMessage     警告メッセージ
+     */
     public GenerationResult(GeneratedCharacter generatedCharacter, boolean usedProvider, String warningMessage) {
         this(generatedCharacter, usedProvider, Optional.ofNullable(warningMessage), Optional.empty());
     }
 
+    /**
+     * 警告とプロンプトを指定して結果を生成します。
+     *
+     * @param generatedCharacter 生成キャラクター
+     * @param usedProvider       プロバイダ利用有無
+     * @param warningMessage     警告メッセージ
+     * @param prompt             使用したプロンプト
+     */
     public GenerationResult(GeneratedCharacter generatedCharacter, boolean usedProvider, String warningMessage, String prompt) {
         this(generatedCharacter, usedProvider, Optional.ofNullable(warningMessage), Optional.ofNullable(prompt));
     }

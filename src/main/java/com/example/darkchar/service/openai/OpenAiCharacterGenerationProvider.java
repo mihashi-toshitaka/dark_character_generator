@@ -12,28 +12,46 @@ import com.example.darkchar.service.ai.ProviderConfigurationStatus;
 import com.example.darkchar.service.ai.ProviderType;
 import com.example.darkchar.service.ai.ProviderGenerationResult;
 
+/**
+ * OpenAI ベースのキャラクター生成を担当するプロバイダです。
+ */
 @Component
 public class OpenAiCharacterGenerationProvider implements CharacterGenerationProvider {
 
     private final OpenAiCharacterGenerationClient generationClient;
     private final OpenAiModelCatalogClient modelCatalogClient;
 
+    /**
+     * OpenAI 関連コンポーネントを注入します。
+     *
+     * @param generationClient SDK クライアント
+     * @param modelCatalogClient モデル一覧クライアント
+     */
     public OpenAiCharacterGenerationProvider(OpenAiCharacterGenerationClient generationClient,
             OpenAiModelCatalogClient modelCatalogClient) {
         this.generationClient = generationClient;
         this.modelCatalogClient = modelCatalogClient;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ProviderType getProviderType() {
         return ProviderType.OPENAI;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getDisplayName() {
         return ProviderType.OPENAI.getDisplayName();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ProviderConfigurationStatus assessConfiguration(AiProviderContext context) {
         if (context.apiKey().isEmpty()) {
@@ -46,6 +64,9 @@ public class OpenAiCharacterGenerationProvider implements CharacterGenerationPro
         return ProviderConfigurationStatus.onReady();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ProviderGenerationResult generate(AiProviderContext context, CharacterInput input, DarknessSelection selection) {
         String apiKey = context.apiKey()
@@ -55,11 +76,17 @@ public class OpenAiCharacterGenerationProvider implements CharacterGenerationPro
         return generationClient.generate(apiKey, modelId, input, selection);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean supportsModelListing() {
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> listAvailableModels(String apiKey) {
         return modelCatalogClient.listModels(apiKey);

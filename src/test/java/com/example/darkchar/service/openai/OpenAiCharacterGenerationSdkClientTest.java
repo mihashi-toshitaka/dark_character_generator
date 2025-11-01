@@ -33,6 +33,9 @@ import com.openai.models.chat.completions.ChatCompletionMessage;
 import com.openai.services.blocking.ChatService;
 import com.openai.services.blocking.chat.ChatCompletionService;
 
+/**
+ * {@link OpenAiCharacterGenerationSdkClient} の振る舞いを検証します。
+ */
 class OpenAiCharacterGenerationSdkClientTest {
 
     private OpenAiClientFactory clientFactory;
@@ -42,6 +45,9 @@ class OpenAiCharacterGenerationSdkClientTest {
     private PromptTemplateRenderer promptTemplateRenderer;
     private OpenAiCharacterGenerationSdkClient client;
 
+    /**
+     * 各テストで必要なスタブを初期化します。
+     */
     @BeforeEach
     void setUp() {
         clientFactory = mock(OpenAiClientFactory.class);
@@ -59,6 +65,9 @@ class OpenAiCharacterGenerationSdkClientTest {
         client = new OpenAiCharacterGenerationSdkClient(clientFactory, promptTemplateRenderer);
     }
 
+    /**
+     * 正常系でレスポンスの文章を整形して返すことを確認します。
+     */
     @Test
     void generateNarrativeCombinesOutputText() {
         CharacterInput input = createCharacterInput();
@@ -83,6 +92,9 @@ class OpenAiCharacterGenerationSdkClientTest {
         verify(promptTemplateRenderer, times(1)).render(input, selection);
     }
 
+    /**
+     * 温度未対応のモデルでリトライすることを確認します。
+     */
     @Test
     void generateNarrativeRetriesWithoutTemperatureWhenUnsupported() {
         CharacterInput input = createCharacterInput();
@@ -113,6 +125,9 @@ class OpenAiCharacterGenerationSdkClientTest {
         verify(promptTemplateRenderer, times(1)).render(input, selection);
     }
 
+    /**
+     * その他のエラーでは例外を伝播することを確認します。
+     */
     @Test
     void generateNarrativeThrowsWhenErrorDoesNotIndicateTemperatureIssue() {
         CharacterInput input = createCharacterInput();
@@ -128,6 +143,11 @@ class OpenAiCharacterGenerationSdkClientTest {
                 .hasMessageContaining("OpenAI API呼び出しに失敗しました。");
     }
 
+    /**
+     * テスト用の入力データを作成します。
+     *
+     * @return キャラクター入力
+     */
     private CharacterInput createCharacterInput() {
         return new CharacterInput(
                 InputMode.SEMI_AUTO,
@@ -138,6 +158,11 @@ class OpenAiCharacterGenerationSdkClientTest {
                 "影に魅入られた");
     }
 
+    /**
+     * テスト用の闇堕ち選択肢を作成します。
+     *
+     * @return 闇堕ち選択
+     */
     private DarknessSelection createDarknessSelection() {
         return new DarknessSelection(
                 Map.of(AttributeCategory.MINDSET,
@@ -145,6 +170,11 @@ class OpenAiCharacterGenerationSdkClientTest {
                 3);
     }
 
+    /**
+     * 温度非対応エラーを模した例外を生成します。
+     *
+     * @return 温度未対応例外
+     */
     private BadRequestException mockTemperatureUnsupportedException() {
         BadRequestException exception = mock(BadRequestException.class);
         when(exception.getMessage()).thenReturn("'temperature' is not supported for this model.");
