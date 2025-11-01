@@ -17,6 +17,7 @@ import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
+import com.example.darkchar.domain.ProtagonistAlignment;
 import com.example.darkchar.domain.WorldGenre;
 import com.example.darkchar.service.AttributeQueryService;
 import com.example.darkchar.service.CharacterGenerationService;
@@ -102,12 +103,6 @@ public class MainViewController {
     private final ToggleGroup modeToggleGroup = new ToggleGroup();
     private final Map<AttributeOption, CheckBox> traitCheckBoxes = new LinkedHashMap<>();
     private final Map<AttributeCategory, List<CheckBox>> darknessCheckBoxes = new EnumMap<>(AttributeCategory.class);
-    private static final Map<Integer, String> PROTAGONIST_PREVIEW_MAP = Map.of(
-            1, "例: 正義側の中心人物として物語が始まる。",
-            2, "例: 主人公陣営の頼れる仲間として登場する。",
-            3, "例: 利害で動く第三勢力、どちらにも肩入れしない。",
-            4, "例: 敵側に傾いた反英雄として物語に関与する。",
-            5, "例: 開幕から敵組織の中核メンバーとして暗躍する。");
     private static final String DEFAULT_PROTAGONIST_PREVIEW = "例: 選択すると例文を表示します。";
     private final ApplicationContext applicationContext;
     private Stage resultStage;
@@ -218,7 +213,10 @@ public class MainViewController {
     }
 
     private void updateProtagonistPreview(int value) {
-        protagonistPreviewLabel.setText(PROTAGONIST_PREVIEW_MAP.getOrDefault(value, DEFAULT_PROTAGONIST_PREVIEW));
+        String preview = ProtagonistAlignment.fromScore(value)
+                .map(ProtagonistAlignment::getPreviewText)
+                .orElse(DEFAULT_PROTAGONIST_PREVIEW);
+        protagonistPreviewLabel.setText(preview);
     }
 
     /**

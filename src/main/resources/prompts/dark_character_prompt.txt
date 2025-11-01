@@ -8,8 +8,8 @@
 [モード]
 {{mode}}
 
-{{characterAttributesSection}}{{traitFreeTextSection}}[主人公度]
-{{protagonistScore}}/5
+{{characterAttributesSection}}{{traitFreeTextSection}}[闇堕ち前の立ち位置]
+{{protagonistAlignmentSection}}
 
 [闇堕ちカテゴリと選択肢]
 {{darknessSelections}}[闇堕ち度]
