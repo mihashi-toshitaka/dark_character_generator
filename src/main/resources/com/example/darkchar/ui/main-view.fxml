@@ -67,10 +67,23 @@
                     </TitledPane>
                     <HBox spacing="12" alignment="CENTER_LEFT">
                         <Label text="闇堕ち度" />
-                        <Slider fx:id="darknessSlider" prefWidth="260" />
-                        <Label fx:id="darknessValueLabel" text="3" />
+                        <Slider fx:id="darknessSlider"
+                                min="50"
+                                max="250"
+                                value="100"
+                                blockIncrement="50"
+                                majorTickUnit="50"
+                                minorTickCount="0"
+                                showTickLabels="true"
+                                showTickMarks="true"
+                                snapToTicks="true"
+                                prefWidth="260" />
+                        <Label fx:id="darknessValueLabel" text="100%（通常）" />
                     </HBox>
-                    <Label wrapText="true" text="※100%で標準の闇堕ち状態です。" styleClass="help-text" />
+                    <Label fx:id="darknessDescriptionLabel" wrapText="true"
+                           text="選択した闇堕ち度の説明がここに表示されます。" />
+                    <Label wrapText="true" text="※闇堕ち度は50%〜250%の5段階プリセット。100%が標準の闇堕ちレベルです。"
+                           styleClass="help-text" />
                     <VBox spacing="6">
                         <Label text="闇堕ちメモ" />
                         <TextArea fx:id="freeTextArea" prefRowCount="3" wrapText="true" />
