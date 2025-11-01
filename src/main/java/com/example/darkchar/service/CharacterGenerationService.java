@@ -155,8 +155,8 @@ public class CharacterGenerationService {
             throw new IllegalArgumentException("闇堕ちカテゴリから少なくとも1つは選択してください。");
         }
         int darknessLevel = darknessSelection.darknessLevel();
-        if (!DarknessPreset.isValidValue(darknessLevel)) {
-            throw new IllegalArgumentException("闇堕ち度は50%から250%の間で50%刻みで選択してください。");
+        if (darknessLevel < 50 || darknessLevel > 250 || darknessLevel % 50 != 0) {
+            throw new IllegalArgumentException("闇堕ち度は50%、100%、150%、200%、250%のいずれかを選択してください。");
         }
     }
 
