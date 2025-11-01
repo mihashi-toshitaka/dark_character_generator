@@ -40,21 +40,20 @@
                         </content>
                     </TitledPane>
                     <VBox spacing="6">
-                        <fx:define>
-                            <ToggleGroup fx:id="protagonistToggleGroup" />
-                        </fx:define>
                         <Label text="立ち位置（主人公⇄敵陣営バイアス）" />
-                        <HBox spacing="10" alignment="CENTER_LEFT">
+                        <HBox spacing="12" alignment="CENTER_LEFT">
                             <Label text="主人公" />
-                            <HBox spacing="6" alignment="CENTER_LEFT">
-                                <children>
-                                    <ToggleButton fx:id="protagonistHeroToggle" text="主人公\n物語の中心" toggleGroup="$protagonistToggleGroup" wrapText="true" prefWidth="110" />
-                                    <ToggleButton fx:id="protagonistAllyToggle" text="仲間寄り\n相棒ポジ" toggleGroup="$protagonistToggleGroup" wrapText="true" prefWidth="110" />
-                                    <ToggleButton fx:id="protagonistNeutralToggle" text="中立・第三勢力\nどちらにも属さない" toggleGroup="$protagonistToggleGroup" wrapText="true" prefWidth="110" />
-                                    <ToggleButton fx:id="protagonistAntiheroToggle" text="敵寄り\n反英雄" toggleGroup="$protagonistToggleGroup" wrapText="true" prefWidth="110" />
-                                    <ToggleButton fx:id="protagonistEnemyToggle" text="敵陣営\n中核メンバー" toggleGroup="$protagonistToggleGroup" wrapText="true" prefWidth="110" />
-                                </children>
-                            </HBox>
+                            <Slider fx:id="protagonistBiasSlider"
+                                    min="1"
+                                    max="5"
+                                    value="3"
+                                    blockIncrement="1"
+                                    majorTickUnit="1"
+                                    minorTickCount="0"
+                                    showTickLabels="true"
+                                    showTickMarks="true"
+                                    snapToTicks="true"
+                                    prefWidth="320" />
                             <Label text="敵陣営" />
                         </HBox>
                         <Label fx:id="protagonistPreviewLabel" text="例: 選択すると例文を表示します。" wrapText="true" />
