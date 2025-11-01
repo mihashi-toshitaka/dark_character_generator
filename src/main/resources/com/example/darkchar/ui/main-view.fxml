@@ -81,7 +81,7 @@
                         <Label fx:id="darknessValueLabel" text="100%（通常）" />
                     </HBox>
                     <Label fx:id="darknessDescriptionLabel" wrapText="true"
-                           text="闇への傾倒が進み、迷いながらも暗い選択を受け入れ始めています。" />
+                           text="闇に完全支配され、価値観も忠誠も暗黒側に固定。自分の行動理念を達成するためには手段を選ばない。正義側から見れば完全敵対化であり、理詰めの説得も情の訴えも通用しない。" />
                     <Label wrapText="true" text="※闇堕ち度は50%〜250%の5段階プリセット。100%で完全敵化。"
                            styleClass="help-text" />
                     <VBox spacing="6">
