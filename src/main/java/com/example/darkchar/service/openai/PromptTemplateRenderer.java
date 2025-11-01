@@ -163,7 +163,10 @@ public class PromptTemplateRenderer {
      * @return パーセント文字列
      */
     private String formatDarknessLevel(DarknessPreset preset) {
-        return preset != null ? preset.formatValueWithLabel() : "";
+        if (preset == null) {
+            return "";
+        }
+        return preset.formatValueWithLabel() + ": " + preset.getDescription();
     }
 
     /**
