@@ -124,4 +124,26 @@ class PromptTemplateRendererTest {
 
         assertThat(actual).isEqualTo(expected);
     }
+
+    /**
+     * 連続する空行が1行に圧縮される一方、意図的な空行が保持されることを確認します。
+     */
+    @Test
+    void renderCollapsesConsecutiveBlankLines() {
+        CharacterInput input = new CharacterInput(
+                InputMode.SEMI_AUTO,
+                new WorldGenre(3L, "ダークファンタジー"),
+                List.of(new AttributeOption(1L, AttributeCategory.CHARACTER_TRAIT, "堕ちた騎士", "堕落した守護者")),
+                "段落A\n\n段落B",
+                3,
+                "闇の囁き\n\n\n深淵の叫び");
+        DarknessSelection selection = new DarknessSelection(Map.of(), 20);
+
+        String actual = renderer.render(input, selection);
+
+        assertThat(actual).contains("段落A\n\n段落B");
+        assertThat(actual).contains("闇の囁き\n\n深淵の叫び");
+        assertThat(actual).doesNotContain("\n\n\n");
+        assertThat(actual).endsWith("\n");
+    }
 }
