@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
-import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.DarknessPreset;
+import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.ProtagonistAlignment;
 
@@ -46,6 +46,7 @@ public class PromptTemplateRenderer {
      */
     public String render(CharacterInput input, DarknessSelection selection) {
         Map<String, String> placeholders = Map.of(
+                "outputTokens", getOutputTokens(1000),
                 "worldGenre", getWorldGenreName(input),
                 "characterAttributesSection", buildCharacterAttributesSection(input),
                 "traitFreeTextSection", buildTraitFreeTextSection(input),
@@ -170,6 +171,15 @@ public class PromptTemplateRenderer {
     }
 
     /**
+     * 
+     * @param outputTokens
+     * @return
+     */
+    private String getOutputTokens(int outputTokens) {
+        return (outputTokens - 200) + "〜" + outputTokens;
+    }
+
+    /**
      * 世界観名を取得します。
      *
      * @param input キャラクター入力
@@ -291,7 +301,7 @@ public class PromptTemplateRenderer {
     /**
      * 任意テキストセクションをフォーマットします。
      *
-     * @param heading 見出し
+     * @param heading  見出し
      * @param freeText 本文
      * @return セクション文字列
      */
