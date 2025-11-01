@@ -20,6 +20,7 @@
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
             <content>
                 <VBox spacing="14" style="-fx-padding: 18;">
+                    <Label text="キャラクター基本設定" styleClass="section-header" />
                     <HBox spacing="12" alignment="CENTER_LEFT">
                         <Label text="モード" />
                         <RadioButton fx:id="autoModeButton" text="オート" />
@@ -43,6 +44,7 @@
                         <Slider fx:id="protagonistSlider" prefWidth="260" />
                         <Label fx:id="protagonistValueLabel" text="3" />
                     </HBox>
+                    <Label text="闇堕ち設定" styleClass="section-header" />
                     <TitledPane text="闇堕ちカテゴリ属性" collapsible="false">
                         <content>
                             <VBox fx:id="darknessCategoryContainer" spacing="10" />
