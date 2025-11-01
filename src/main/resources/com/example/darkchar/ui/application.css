@@ -12,3 +12,8 @@
     -fx-font-size: 16px;
     -fx-font-weight: bold;
 }
+
+.help-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: derive(-fx-text-base-color, -40%);
+}
