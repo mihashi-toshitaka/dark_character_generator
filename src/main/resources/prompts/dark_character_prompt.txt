@@ -15,7 +15,7 @@
 [闇堕ちカテゴリと選択肢]
 {{darknessSelections}}
 
-[闇堕ち度(プリセット:50%軽度/100%通常/150%重め/200%過激/250%極端、100%は通常)]
+[闇堕ち度 (50%–250% 100%で完全敵化)]
 {{darknessLevel}}
 
 {{darknessFreeTextSection}}

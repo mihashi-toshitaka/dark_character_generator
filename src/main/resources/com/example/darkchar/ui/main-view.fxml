@@ -82,7 +82,7 @@
                     </HBox>
                     <Label fx:id="darknessDescriptionLabel" wrapText="true"
                            text="闇への傾倒が進み、迷いながらも暗い選択を受け入れ始めています。" />
-                    <Label wrapText="true" text="※闇堕ち度は50%〜250%の5段階プリセット。100%が標準の闇堕ちレベルです。"
+                    <Label wrapText="true" text="※闇堕ち度は50%〜250%の5段階プリセット。100%で完全敵化。"
                            styleClass="help-text" />
                     <VBox spacing="6">
                         <Label text="闇堕ちメモ" />
