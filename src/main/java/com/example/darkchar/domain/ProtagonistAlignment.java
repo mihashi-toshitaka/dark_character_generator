@@ -79,6 +79,17 @@ public enum ProtagonistAlignment {
      * @return 整形済み文字列
      */
     public String formatPromptLine() {
-        return "主人公度 " + score + "/5: " + promptDescription + "。";
+        String trimmedDescription = promptDescription.trim();
+        if (trimmedDescription.isEmpty()) {
+            return trimmedDescription;
+        }
+
+        char lastChar = trimmedDescription.charAt(trimmedDescription.length() - 1);
+        if (lastChar == '。' || lastChar == '！' || lastChar == '？' ||
+                lastChar == '.' || lastChar == '!' || lastChar == '?') {
+            return trimmedDescription;
+        }
+
+        return trimmedDescription + "。";
     }
 }
