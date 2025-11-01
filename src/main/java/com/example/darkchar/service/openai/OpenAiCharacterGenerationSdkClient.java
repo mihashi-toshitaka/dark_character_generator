@@ -20,7 +20,7 @@ import com.openai.models.chat.completions.ChatCompletionCreateParams;
 public class OpenAiCharacterGenerationSdkClient implements OpenAiCharacterGenerationClient {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenAiCharacterGenerationSdkClient.class);
-    private static final int MAX_OUTPUT_TOKENS = 1200;
+    private static final int MAX_OUTPUT_TOKENS = 10000;
     private static final double TEMPERATURE = 0.8d;
 
     private final OpenAiClientFactory clientFactory;
