@@ -186,7 +186,52 @@ public class PromptTemplateRenderer {
         for (var entry : placeholders.entrySet()) {
             rendered = rendered.replace("{{" + entry.getKey() + "}}", entry.getValue());
         }
-        return rendered;
+        return collapseConsecutiveBlankLines(rendered);
+    }
+
+    /**
+     * 連続する空行を1行にまとめます。
+     *
+     * @param text 対象文字列
+     * @return 整形後の文字列
+     */
+    private String collapseConsecutiveBlankLines(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        StringBuilder result = new StringBuilder(text.length());
+        int length = text.length();
+        int index = 0;
+        boolean previousBlankLine = false;
+
+        while (index < length) {
+            int newlineIndex = text.indexOf('\n', index);
+            String line;
+            int nextIndex;
+            if (newlineIndex >= 0) {
+                line = text.substring(index, newlineIndex);
+                nextIndex = newlineIndex + 1;
+            } else {
+                line = text.substring(index);
+                nextIndex = length;
+            }
+
+            boolean isBlankLine = line.isBlank();
+            if (isBlankLine && previousBlankLine) {
+                index = nextIndex;
+                continue;
+            }
+
+            result.append(line);
+            if (newlineIndex >= 0) {
+                result.append('\n');
+            }
+
+            previousBlankLine = isBlankLine;
+            index = nextIndex;
+        }
+
+        return result.toString();
     }
 
     /**
