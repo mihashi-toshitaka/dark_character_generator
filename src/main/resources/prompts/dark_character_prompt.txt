@@ -5,14 +5,22 @@
 [世界観ジャンル]
 {{worldGenre}}
 
-{{characterAttributesSection}}{{traitFreeTextSection}}[闇堕ち前の立ち位置]
+{{characterAttributesSection}}
+
+{{traitFreeTextSection}}
+
+[闇堕ち前の立ち位置]
 {{protagonistAlignmentSection}}
 
 [闇堕ちカテゴリと選択肢]
-{{darknessSelections}}[闇堕ち度]
+{{darknessSelections}}
+
+[闇堕ち度(100%で標準の闇堕ち状態)]
 {{darknessLevel}}
 
-{{darknessFreeTextSection}}条件:
+{{darknessFreeTextSection}}
+
+条件:
 1. キャラクターが闇堕ちに至った心理的な揺らぎや事件を描写する。
 2. 闇堕ち後のビジュアルや能力、価値観の変化を盛り込む。
 3. 最後は読者が次の展開を想像できる余韻を残す。
