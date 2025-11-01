@@ -15,6 +15,7 @@ import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.InputMode;
+import com.example.darkchar.domain.ProtagonistAlignment;
 
 /**
  * テンプレートを用いて OpenAI へのプロンプトを生成します。
@@ -48,7 +49,7 @@ public class PromptTemplateRenderer {
                 "mode", toModeLabel(input.mode()),
                 "characterAttributesSection", buildCharacterAttributesSection(input),
                 "traitFreeTextSection", buildTraitFreeTextSection(input),
-                "protagonistScore", Integer.toString(input.protagonistScore()),
+                "protagonistAlignmentSection", buildProtagonistAlignmentSection(input),
                 "darknessSelections", buildDarknessSelections(selection),
                 "darknessLevel", selection != null ? formatPercent(selection.darknessLevel()) : "",
                 "darknessFreeTextSection", buildDarknessFreeTextSection(input));
@@ -91,6 +92,18 @@ public class PromptTemplateRenderer {
      */
     private String buildTraitFreeTextSection(CharacterInput input) {
         return formatFreeTextSection("[キャラクター属性メモ]", input.traitFreeText());
+    }
+
+    /**
+     * 主人公度セクションを組み立てます。
+     *
+     * @param input キャラクター入力
+     * @return セクション文字列
+     */
+    private String buildProtagonistAlignmentSection(CharacterInput input) {
+        return ProtagonistAlignment.fromScore(input.protagonistScore())
+                .map(alignment -> alignment.formatPromptLine() + "\n\n")
+                .orElse("\n");
     }
 
     /**

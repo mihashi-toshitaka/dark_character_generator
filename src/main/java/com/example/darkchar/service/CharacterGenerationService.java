@@ -17,6 +17,7 @@ import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
+import com.example.darkchar.domain.ProtagonistAlignment;
 import com.example.darkchar.service.ai.AiProviderContext;
 import com.example.darkchar.service.ai.AiProviderContextStore;
 import com.example.darkchar.service.ai.CharacterGenerationProvider;
@@ -170,7 +171,19 @@ public class CharacterGenerationService {
         builder.append("【闇堕ちキャラクター概要】\n");
         builder.append("世界観ジャンル: ").append(input.worldGenre().name()).append('\n');
         builder.append("モード: ").append(input.mode() == InputMode.AUTO ? "オート" : "セミオート").append('\n');
-        builder.append("主人公度: ").append(input.protagonistScore()).append("/5\n\n");
+        ProtagonistAlignment alignment = ProtagonistAlignment.fromScore(input.protagonistScore()).orElse(null);
+        builder.append("闇堕ち前の立ち位置: ");
+        if (alignment != null) {
+            builder.append(alignment.getPromptDescription())
+                    .append(" (主人公度 ")
+                    .append(alignment.getScore())
+                    .append("/5)");
+        } else {
+            builder.append("不明 (主人公度 ")
+                    .append(input.protagonistScore())
+                    .append("/5)");
+        }
+        builder.append('\n').append('\n');
 
         if (input.mode() == InputMode.SEMI_AUTO) {
             builder.append("■キャラクター属性\n");
@@ -226,14 +239,22 @@ public class CharacterGenerationService {
             }
         }
         String highlightText = String.join("。", highlights);
+        ProtagonistAlignment alignment = ProtagonistAlignment.fromScore(input.protagonistScore()).orElse(null);
+        String alignmentDescription = alignment != null
+                ? alignment.getPromptDescription()
+                : "主人公陣営との関係は不明";
+        String alignmentScore = alignment != null
+                ? alignment.getScore() + "/5"
+                : input.protagonistScore() + "/5";
         String base = """
-                元のキャラクターは%sの世界で活躍していましたが、主人公度%sの揺らぎが闇への扉を開きました。
+                元のキャラクターは%sの世界で活躍していましたが、%s（主人公度%s）が闇への扉を開きました。
                 %s。
                 闇堕ち度%sの現在、彼/彼女はかつての姿を忘れ、独自の正義で世界を塗り替えようとしています。
                 """;
         return base.formatted(
                 input.worldGenre().name(),
-                input.protagonistScore(),
+                alignmentDescription,
+                alignmentScore,
                 highlightText.isEmpty() ? "闇の属性はまだ不明瞭です" : highlightText,
                 formatPercent(darknessSelection.darknessLevel()));
     }
