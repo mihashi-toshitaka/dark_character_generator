@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
+import com.example.darkchar.domain.DarknessPreset;
 import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.ProtagonistAlignment;
 
@@ -50,7 +51,7 @@ public class PromptTemplateRenderer {
                 "traitFreeTextSection", buildTraitFreeTextSection(input),
                 "protagonistAlignmentSection", buildProtagonistAlignmentSection(input),
                 "darknessSelections", buildDarknessSelections(selection),
-                "darknessLevel", selection != null ? formatPercent(selection.darknessLevel()) : "",
+                "darknessLevel", selection != null ? formatDarknessLevel(selection.preset()) : "",
                 "darknessFreeTextSection", buildDarknessFreeTextSection(input));
 
         return renderTemplate(placeholders);
@@ -161,8 +162,8 @@ public class PromptTemplateRenderer {
      * @param value 数値
      * @return パーセント文字列
      */
-    private String formatPercent(int value) {
-        return value + "%";
+    private String formatDarknessLevel(DarknessPreset preset) {
+        return preset != null ? preset.formatValueWithLabel() : "";
     }
 
     /**

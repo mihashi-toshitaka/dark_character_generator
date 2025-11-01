@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.example.darkchar.domain.AttributeCategory;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
+import com.example.darkchar.domain.DarknessPreset;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.GeneratedCharacter;
 import com.example.darkchar.domain.InputMode;
@@ -154,8 +155,8 @@ public class CharacterGenerationService {
             throw new IllegalArgumentException("闇堕ちカテゴリから少なくとも1つは選択してください。");
         }
         int darknessLevel = darknessSelection.darknessLevel();
-        if (darknessLevel < 10 || darknessLevel > 300 || darknessLevel % 10 != 0) {
-            throw new IllegalArgumentException("闇堕ち度は10%から300%の間で10%刻みで選択してください。");
+        if (!DarknessPreset.isValidValue(darknessLevel)) {
+            throw new IllegalArgumentException("闇堕ち度は50%から250%の間で50%刻みで選択してください。");
         }
     }
 
@@ -209,7 +210,8 @@ public class CharacterGenerationService {
             }
         }
         builder.append('\n');
-        builder.append("闇堕ち度: ").append(formatPercent(darknessSelection.darknessLevel())).append("\n\n");
+        builder.append("闇堕ち度: ").append(formatDarknessLevel(darknessSelection)).append('\n');
+        builder.append("説明: ").append(darknessSelection.darknessDescription()).append("\n\n");
 
         if (input.darknessFreeText() != null && !input.darknessFreeText().isBlank()) {
             builder.append("■闇堕ちメモ\n");
@@ -256,7 +258,7 @@ public class CharacterGenerationService {
                 alignmentDescription,
                 alignmentScore,
                 highlightText.isEmpty() ? "闇の属性はまだ不明瞭です" : highlightText,
-                formatPercent(darknessSelection.darknessLevel()));
+                formatDarknessLevel(darknessSelection));
     }
 
     /**
@@ -265,7 +267,7 @@ public class CharacterGenerationService {
      * @param value 数値
      * @return パーセント文字列
      */
-    private String formatPercent(int value) {
-        return value + "%";
+    private String formatDarknessLevel(DarknessSelection selection) {
+        return selection.preset().formatValueWithLabel();
     }
 }

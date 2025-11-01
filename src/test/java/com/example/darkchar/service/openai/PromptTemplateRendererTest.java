@@ -11,6 +11,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import com.example.darkchar.domain.AttributeCategory;
 import com.example.darkchar.domain.AttributeOption;
 import com.example.darkchar.domain.CharacterInput;
+import com.example.darkchar.domain.DarknessPreset;
 import com.example.darkchar.domain.DarknessSelection;
 import com.example.darkchar.domain.InputMode;
 import com.example.darkchar.domain.WorldGenre;
@@ -37,7 +38,7 @@ class PromptTemplateRendererTest {
         DarknessSelection selection = new DarknessSelection(
                 Map.of(AttributeCategory.MINDSET,
                         List.of(new AttributeOption(2L, AttributeCategory.MINDSET, "復讐心", "復讐に燃える"))),
-                30);
+                DarknessPreset.MILD);
 
         String actual = renderer.render(input, selection);
 
@@ -65,7 +66,7 @@ class PromptTemplateRendererTest {
                 性向の変質: 復讐心
                 
                 [闇堕ち度]
-                30%
+                50%（軽度）
                 
                 [闇堕ちメモ]
                 影に魅入られた
@@ -92,7 +93,7 @@ class PromptTemplateRendererTest {
                 null,
                 2,
                 null);
-        DarknessSelection selection = new DarknessSelection(Map.of(), 10);
+        DarknessSelection selection = new DarknessSelection(Map.of(), DarknessPreset.STANDARD);
 
         String actual = renderer.render(input, selection);
 
@@ -113,7 +114,7 @@ class PromptTemplateRendererTest {
                 [闇堕ちカテゴリと選択肢]
                 
                 [闇堕ち度]
-                10%
+                100%（通常）
                 
                 条件:
                 1. キャラクターが闇堕ちに至った心理的な揺らぎや事件を描写する。
@@ -137,7 +138,7 @@ class PromptTemplateRendererTest {
                 "段落A\n\n段落B",
                 3,
                 "闇の囁き\n\n\n深淵の叫び");
-        DarknessSelection selection = new DarknessSelection(Map.of(), 20);
+        DarknessSelection selection = new DarknessSelection(Map.of(), DarknessPreset.HEAVY);
 
         String actual = renderer.render(input, selection);
 
