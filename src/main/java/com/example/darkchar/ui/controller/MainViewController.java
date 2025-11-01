@@ -37,10 +37,9 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TitledPane;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.concurrent.Task;
@@ -80,22 +79,7 @@ public class MainViewController {
     private VBox darknessCategoryContainer;
 
     @FXML
-    private ToggleGroup protagonistToggleGroup;
-
-    @FXML
-    private ToggleButton protagonistHeroToggle;
-
-    @FXML
-    private ToggleButton protagonistAllyToggle;
-
-    @FXML
-    private ToggleButton protagonistNeutralToggle;
-
-    @FXML
-    private ToggleButton protagonistAntiheroToggle;
-
-    @FXML
-    private ToggleButton protagonistEnemyToggle;
+    private Slider protagonistBiasSlider;
 
     @FXML
     private Label protagonistPreviewLabel;
@@ -124,6 +108,7 @@ public class MainViewController {
             3, "例: 利害で動く第三勢力、どちらにも肩入れしない。",
             4, "例: 敵側に傾いた反英雄として物語に関与する。",
             5, "例: 開幕から敵組織の中核メンバーとして暗躍する。");
+    private static final String DEFAULT_PROTAGONIST_PREVIEW = "例: 選択すると例文を表示します。";
     private final ApplicationContext applicationContext;
     private Stage resultStage;
     private CharacterResultController resultController;
@@ -158,7 +143,7 @@ public class MainViewController {
         autoModeButton.setSelected(true);
         modeToggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> updateMode());
 
-        setupProtagonistBiasSelector();
+        setupProtagonistBiasSlider();
 
         darknessSlider.setMin(10);
         darknessSlider.setMax(300);
@@ -201,35 +186,39 @@ public class MainViewController {
         updateMode();
     }
 
-    private void setupProtagonistBiasSelector() {
-        Map<ToggleButton, Integer> valueMap = Map.of(
-                protagonistHeroToggle, 1,
-                protagonistAllyToggle, 2,
-                protagonistNeutralToggle, 3,
-                protagonistAntiheroToggle, 4,
-                protagonistEnemyToggle, 5);
-        valueMap.forEach((toggleButton, value) -> toggleButton.setUserData(value));
+    private void setupProtagonistBiasSlider() {
+        protagonistBiasSlider.setMin(1);
+        protagonistBiasSlider.setMax(5);
+        protagonistBiasSlider.setMajorTickUnit(1);
+        protagonistBiasSlider.setMinorTickCount(0);
+        protagonistBiasSlider.setSnapToTicks(true);
+        protagonistBiasSlider.setShowTickMarks(true);
+        protagonistBiasSlider.setShowTickLabels(true);
+        protagonistBiasSlider.setBlockIncrement(1);
+        protagonistBiasSlider.setValue(3);
 
-        protagonistToggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
-            if (newToggle != null) {
-                int value = (int) newToggle.getUserData();
-                protagonistPreviewLabel.setText(PROTAGONIST_PREVIEW_MAP.getOrDefault(value,
-                        "例: 選択すると例文を表示します。"));
-            } else {
-                protagonistPreviewLabel.setText("例: 選択すると例文を表示します。");
+        updateProtagonistPreview(3);
+
+        protagonistBiasSlider.valueProperty().addListener((obs, oldValue, newValue) -> {
+            int rounded = clampProtagonistBias(newValue.doubleValue());
+            if (Math.abs(newValue.doubleValue() - rounded) > 0.0001) {
+                protagonistBiasSlider.setValue(rounded);
+                return;
             }
+            updateProtagonistPreview(rounded);
         });
-        protagonistNeutralToggle.setSelected(true);
     }
 
     private int getSelectedProtagonistBias() {
-        Toggle selected = protagonistToggleGroup.getSelectedToggle();
-        if (selected == null) {
-            protagonistNeutralToggle.setSelected(true);
-            selected = protagonistNeutralToggle;
-        }
-        Object userData = selected.getUserData();
-        return userData instanceof Integer ? (Integer) userData : 3;
+        return clampProtagonistBias(protagonistBiasSlider.getValue());
+    }
+
+    private int clampProtagonistBias(double value) {
+        return (int) Math.max(1, Math.min(5, Math.round(value)));
+    }
+
+    private void updateProtagonistPreview(int value) {
+        protagonistPreviewLabel.setText(PROTAGONIST_PREVIEW_MAP.getOrDefault(value, DEFAULT_PROTAGONIST_PREVIEW));
     }
 
     /**
