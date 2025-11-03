@@ -150,10 +150,8 @@ public class SettingsController {
                 updateStatus("使用するモデルを選択してください。");
                 return;
             }
-            providerContextStore.setAvailableModels(providerType, currentModels);
             providerContextStore.setSelectedModel(providerType, selected);
         } else {
-            providerContextStore.setAvailableModels(providerType, List.of());
             providerContextStore.setSelectedModel(providerType, null);
         }
 
@@ -215,7 +213,6 @@ public class SettingsController {
      */
     private void loadModelsFromCatalog(ProviderType providerType) {
         currentModels = new ArrayList<>(modelCatalog.listModels(providerType));
-        providerContextStore.setAvailableModels(providerType, currentModels);
         if (modelComboBox != null) {
             modelComboBox.getItems().setAll(currentModels);
             boolean hasModels = !currentModels.isEmpty();
@@ -266,16 +263,11 @@ public class SettingsController {
         if (apiKeyField != null) {
             apiKeyField.setText(context.apiKey().orElse(""));
         }
-        currentModels = new ArrayList<>(context.availableModels());
-
         boolean requiresModels = modelCatalog.requiresModelSelection(providerType);
-        if (requiresModels && currentModels.isEmpty()) {
+        if (requiresModels) {
             currentModels = new ArrayList<>(modelCatalog.listModels(providerType));
-            providerContextStore.setAvailableModels(providerType, currentModels);
-        }
-        if (!requiresModels) {
-            currentModels.clear();
-            providerContextStore.setAvailableModels(providerType, List.of());
+        } else {
+            currentModels = new ArrayList<>();
             providerContextStore.setSelectedModel(providerType, null);
         }
 

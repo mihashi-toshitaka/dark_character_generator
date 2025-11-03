@@ -1,6 +1,5 @@
 package com.example.darkchar.service.ai;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -87,26 +86,6 @@ public class AiProviderContextStore {
     }
 
     /**
-     * 利用可能モデル一覧を取得します。
-     *
-     * @param type プロバイダ種別
-     * @return モデルID一覧
-     */
-    public List<String> getAvailableModels(ProviderType type) {
-        return getHolder(type).availableModels();
-    }
-
-    /**
-     * 利用可能モデル一覧を保存します。
-     *
-     * @param type   プロバイダ種別
-     * @param models モデルID一覧
-     */
-    public void setAvailableModels(ProviderType type, List<String> models) {
-        getHolder(type).setAvailableModels(models);
-    }
-
-    /**
      * 現在の設定をまとめて取得します。
      *
      * @param type プロバイダ種別
@@ -145,8 +124,6 @@ public class AiProviderContextStore {
 
         private final AtomicReference<String> apiKeyRef = new AtomicReference<>();
         private final AtomicReference<String> selectedModelRef = new AtomicReference<>();
-        private final AtomicReference<List<String>> availableModelsRef = new AtomicReference<>(List.of());
-
         /**
          * APIキーを返します。
          *
@@ -165,14 +142,12 @@ public class AiProviderContextStore {
             if (apiKey == null) {
                 apiKeyRef.set(null);
                 selectedModelRef.set(null);
-                availableModelsRef.set(List.of());
                 return;
             }
             String normalized = apiKey.trim();
             if (normalized.isEmpty()) {
                 apiKeyRef.set(null);
                 selectedModelRef.set(null);
-                availableModelsRef.set(List.of());
             } else {
                 apiKeyRef.set(normalized);
             }
@@ -215,35 +190,11 @@ public class AiProviderContextStore {
         }
 
         /**
-         * 利用可能モデル一覧を返します。
-         *
-         * @return モデルID一覧
-         */
-        List<String> availableModels() {
-            List<String> models = availableModelsRef.get();
-            return models == null ? List.of() : List.copyOf(models);
-        }
-
-        /**
-         * 利用可能モデル一覧を設定します。
-         *
-         * @param models モデルID一覧
-         */
-        void setAvailableModels(List<String> models) {
-            if (models == null || models.isEmpty()) {
-                availableModelsRef.set(List.of());
-            } else {
-                availableModelsRef.set(List.copyOf(models));
-            }
-        }
-
-        /**
          * すべての情報を初期化します。
          */
         void clear() {
             apiKeyRef.set(null);
             selectedModelRef.set(null);
-            availableModelsRef.set(List.of());
         }
 
         /**
@@ -253,7 +204,7 @@ public class AiProviderContextStore {
          * @return コンテキスト
          */
         AiProviderContext snapshot(ProviderType type) {
-            return new AiProviderContext(type, apiKey(), selectedModel(), availableModels());
+            return new AiProviderContext(type, apiKey(), selectedModel());
         }
     }
 }

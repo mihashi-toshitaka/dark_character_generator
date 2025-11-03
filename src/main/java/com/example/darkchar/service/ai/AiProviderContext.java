@@ -1,6 +1,5 @@
 package com.example.darkchar.service.ai;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -9,8 +8,7 @@ import java.util.Optional;
 public record AiProviderContext(
         ProviderType providerType,
         Optional<String> apiKey,
-        Optional<String> selectedModel,
-        List<String> availableModels) {
+        Optional<String> selectedModel) {
 
     /**
      * 入力値を検証し正規化します。
@@ -21,6 +19,5 @@ public record AiProviderContext(
         }
         apiKey = apiKey == null ? Optional.empty() : apiKey;
         selectedModel = selectedModel == null ? Optional.empty() : selectedModel;
-        availableModels = availableModels == null ? List.of() : List.copyOf(availableModels);
     }
 }
