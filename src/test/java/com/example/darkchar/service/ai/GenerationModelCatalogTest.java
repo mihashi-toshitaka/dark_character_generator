@@ -1,6 +1,7 @@
 package com.example.darkchar.service.ai;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
@@ -28,11 +29,30 @@ class GenerationModelCatalogTest {
         }
 
         @Test
+        @DisplayName("返却リストを書き換えてもカタログ内部に影響しない")
+        void returnsDefensiveCopy() {
+            List<String> models = catalog.listModels(ProviderType.OPENAI);
+
+            models.add("custom");
+
+            List<String> secondCall = catalog.listModels(ProviderType.OPENAI);
+            assertThat(secondCall)
+                    .containsExactlyElementsOf(OpenAiGenerationModel.ids());
+        }
+
+        @Test
         @DisplayName("未対応プロバイダは空のリストを返す")
         void returnsEmptyListForUnsupportedProviders() {
             List<String> models = catalog.listModels(ProviderType.LOCAL);
 
             assertThat(models).isEmpty();
+        }
+
+        @Test
+        @DisplayName("null を渡すと例外がスローされる")
+        void throwsForNullProvider() {
+            assertThatThrownBy(() -> catalog.listModels(null))
+                    .isInstanceOf(NullPointerException.class);
         }
     }
 
