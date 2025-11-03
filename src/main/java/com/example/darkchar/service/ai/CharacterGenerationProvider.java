@@ -1,7 +1,5 @@
 package com.example.darkchar.service.ai;
 
-import java.util.List;
-
 import com.example.darkchar.domain.CharacterInput;
 import com.example.darkchar.domain.DarknessSelection;
 
@@ -41,25 +39,6 @@ public interface CharacterGenerationProvider {
      * @return 生成結果
      */
     ProviderGenerationResult generate(AiProviderContext context, CharacterInput input, DarknessSelection selection);
-
-    /**
-     * モデル一覧取得に対応しているか示します。
-     *
-     * @return 対応していれば true
-     */
-    default boolean supportsModelListing() {
-        return false;
-    }
-
-    /**
-     * APIキーを用いて利用可能モデルを取得します。
-     *
-     * @param apiKey APIキー
-     * @return モデルID一覧
-     */
-    default List<String> listAvailableModels(String apiKey) {
-        return List.of();
-    }
 
     /**
      * 連携失敗時に表示する警告文を構築します。

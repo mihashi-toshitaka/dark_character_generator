@@ -10,11 +10,11 @@ import com.example.darkchar.service.ai.AiProviderContext;
 import com.example.darkchar.service.ai.AiProviderContextStore;
 import com.example.darkchar.service.ai.CharacterGenerationProvider;
 import com.example.darkchar.service.ai.CharacterGenerationStrategyRegistry;
+import com.example.darkchar.service.ai.GenerationModelCatalog;
 import com.example.darkchar.service.ai.ProviderType;
 import com.example.darkchar.ui.AppStyleUtil;
 
 import javafx.collections.FXCollections;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -34,6 +34,7 @@ public class SettingsController {
 
     private final AiProviderContextStore providerContextStore;
     private final CharacterGenerationStrategyRegistry strategyRegistry;
+    private final GenerationModelCatalog modelCatalog;
 
     private List<String> currentModels = new ArrayList<>();
     private ProviderType currentProviderType;
@@ -57,15 +58,17 @@ public class SettingsController {
     private Stage stage;
 
     /**
-     * 設定ストアとレジストリを注入します。
+     * 設定ストア・レジストリ・モデルカタログを注入します。
      *
      * @param providerContextStore プロバイダ設定ストア
      * @param strategyRegistry     プロバイダレジストリ
+     * @param modelCatalog         モデルカタログ
      */
     public SettingsController(AiProviderContextStore providerContextStore,
-            CharacterGenerationStrategyRegistry strategyRegistry) {
+            CharacterGenerationStrategyRegistry strategyRegistry, GenerationModelCatalog modelCatalog) {
         this.providerContextStore = providerContextStore;
         this.strategyRegistry = strategyRegistry;
+        this.modelCatalog = modelCatalog;
     }
 
     /**
@@ -120,7 +123,6 @@ public class SettingsController {
     @FXML
     void handleSave(ActionEvent event) {
         ProviderType providerType = getCurrentProviderType();
-        CharacterGenerationProvider provider = getCurrentProvider();
 
         String key = apiKeyField.getText();
         if (key != null) {
@@ -138,7 +140,7 @@ public class SettingsController {
             return;
         }
 
-        if (provider != null && provider.supportsModelListing()) {
+        if (modelCatalog.requiresModelSelection(providerType)) {
             if (modelComboBox == null || modelComboBox.isDisabled() || modelComboBox.getItems().isEmpty()) {
                 updateStatus("モデル一覧を取得してから保存してください。");
                 return;
@@ -199,76 +201,33 @@ public class SettingsController {
     @FXML
     void handleLoadModels(ActionEvent event) {
         ProviderType providerType = getCurrentProviderType();
-        CharacterGenerationProvider provider = getCurrentProvider();
-        if (provider == null || !provider.supportsModelListing()) {
+        if (!modelCatalog.requiresModelSelection(providerType)) {
             showWarning("このプロバイダではモデル一覧を取得できません。");
             return;
         }
+        loadModelsFromCatalog(providerType);
+    }
 
-        String inputKey = apiKeyField.getText();
-        if (inputKey != null) {
-            inputKey = inputKey.trim();
-        }
-        if (inputKey == null || inputKey.isEmpty()) {
-            showWarning("APIキーを入力してください。");
-            return;
-        }
-        final String key = inputKey;
-
-        if (loadModelsButton != null) {
-            loadModelsButton.setDisable(true);
-        }
+    /**
+     * モデルカタログから利用可能なモデル一覧を読み込みます。
+     *
+     * @param providerType プロバイダ種別
+     */
+    private void loadModelsFromCatalog(ProviderType providerType) {
+        currentModels = new ArrayList<>(modelCatalog.listModels(providerType));
+        providerContextStore.setAvailableModels(providerType, currentModels);
         if (modelComboBox != null) {
-            modelComboBox.setDisable(true);
+            modelComboBox.getItems().setAll(currentModels);
+            boolean hasModels = !currentModels.isEmpty();
+            modelComboBox.setDisable(!hasModels);
+            Optional<String> selected = providerContextStore.getSelectedModel(providerType);
+            if (selected.isPresent() && currentModels.contains(selected.get())) {
+                modelComboBox.getSelectionModel().select(selected.get());
+            } else {
+                modelComboBox.getSelectionModel().clearSelection();
+            }
         }
-        updateStatus("モデル一覧を取得しています...");
-
-        Task<List<String>> task = new Task<>() {
-            @Override
-            protected List<String> call() {
-                return provider.listAvailableModels(key);
-            }
-        };
-
-        task.setOnSucceeded(e -> {
-            currentModels = new ArrayList<>(task.getValue());
-            providerContextStore.setAvailableModels(providerType, currentModels);
-            if (modelComboBox != null) {
-                modelComboBox.getItems().setAll(currentModels);
-                boolean hasModels = !currentModels.isEmpty();
-                modelComboBox.setDisable(!hasModels);
-                Optional<String> selected = providerContextStore.getSelectedModel(providerType);
-                if (selected.isPresent() && currentModels.contains(selected.get())) {
-                    modelComboBox.getSelectionModel().select(selected.get());
-                } else {
-                    modelComboBox.getSelectionModel().clearSelection();
-                }
-            }
-            updateStatus(currentModels.isEmpty() ? "利用可能なモデルが見つかりませんでした。" : "モデルを選択してください。");
-            if (loadModelsButton != null) {
-                loadModelsButton.setDisable(false);
-            }
-        });
-
-        task.setOnFailed(e -> {
-            Throwable throwable = task.getException();
-            String message = (throwable == null || throwable.getMessage() == null || throwable.getMessage().isBlank())
-                    ? "モデル一覧の取得に失敗しました。"
-                    : throwable.getMessage();
-            showWarning(message);
-            updateStatus("モデル一覧の取得に失敗しました。");
-            if (loadModelsButton != null) {
-                loadModelsButton.setDisable(false);
-            }
-            if (modelComboBox != null) {
-                modelComboBox.getItems().setAll(currentModels);
-                modelComboBox.setDisable(currentModels.isEmpty());
-            }
-        });
-
-        Thread thread = new Thread(task, providerType.name().toLowerCase() + "-model-fetcher");
-        thread.setDaemon(true);
-        thread.start();
+        updateStatus(currentModels.isEmpty() ? "利用可能なモデルが見つかりませんでした。" : "モデルを選択してください。");
     }
 
     /**
@@ -309,12 +268,20 @@ public class SettingsController {
         }
         currentModels = new ArrayList<>(context.availableModels());
 
-        CharacterGenerationProvider provider = getCurrentProvider();
-        boolean supportsModels = provider != null && provider.supportsModelListing();
+        boolean requiresModels = modelCatalog.requiresModelSelection(providerType);
+        if (requiresModels && currentModels.isEmpty()) {
+            currentModels = new ArrayList<>(modelCatalog.listModels(providerType));
+            providerContextStore.setAvailableModels(providerType, currentModels);
+        }
+        if (!requiresModels) {
+            currentModels.clear();
+            providerContextStore.setAvailableModels(providerType, List.of());
+            providerContextStore.setSelectedModel(providerType, null);
+        }
 
         if (modelComboBox != null) {
             modelComboBox.getItems().setAll(currentModels);
-            if (supportsModels) {
+            if (requiresModels) {
                 boolean hasModels = !currentModels.isEmpty();
                 modelComboBox.setDisable(!hasModels);
                 Optional<String> selected = context.selectedModel();
@@ -330,7 +297,7 @@ public class SettingsController {
         }
 
         if (loadModelsButton != null) {
-            loadModelsButton.setDisable(!supportsModels);
+            loadModelsButton.setDisable(!requiresModels);
         }
 
         boolean hasKey = providerContextStore.hasApiKey(providerType);
@@ -345,16 +312,6 @@ public class SettingsController {
      */
     private ProviderType getCurrentProviderType() {
         return currentProviderType == null ? providerContextStore.getActiveProviderType() : currentProviderType;
-    }
-
-    /**
-     * 現在選択中のプロバイダ実装を取得します。
-     *
-     * @return プロバイダ実装
-     */
-    private CharacterGenerationProvider getCurrentProvider() {
-        ProviderType providerType = getCurrentProviderType();
-        return strategyRegistry.findProvider(providerType).orElse(null);
     }
 
     /**
