@@ -1,0 +1,99 @@
+THIRD-PARTY-NOTICES
+===================
+
+この配布物には、以下の第三者ソフトウェアおよびアセットが含まれます。
+各コンポーネントのライセンス条文は配布物内
+THIRD-PARTY-NOTICES/licenses/
+に同梱しています。二次依存関係については各プロジェクトの NOTICE / LICENSE を参照してください。
+
+生成日: 2025-11-03 (Asia/Tokyo)
+
+-------------------------------------------------------------------------------
+1) Spring Boot Starters
+   - 名称: spring-boot-starter / spring-boot-starter-jdbc /
+           spring-boot-starter-json / spring-boot-starter-web
+   - 取得元: Maven Central（Spring Boot 3.2.5 系）
+   - ライセンス: Apache License 2.0
+   - コピーライト: © 2002–2025 Pivotal Software, Inc. and others
+   - URL: https://spring.io/projects/spring-boot
+   - NOTICE:
+     This product includes software developed by the Spring Project (https://spring.io/).
+     本アプリケーションは Spring Boot を利用しています。
+
+   * ライセンス原文: licenses/apache-2.0.txt
+   * 追加注意: Apache-2.0 に基づき、著作権表示および本 NOTICE の保持が推奨されます。
+
+-------------------------------------------------------------------------------
+2) Spring Boot Test Starter
+   - 名称: spring-boot-starter-test
+   - 取得元: Maven Central（Spring Boot 3.2.5 系）
+   - ライセンス: Apache License 2.0
+   - コピーライト: © 2002–2025 Pivotal Software, Inc. and others
+   - URL: https://spring.io/projects/spring-boot
+
+   * ライセンス原文: licenses/apache-2.0.txt
+
+   ※ JUnit 等の二次依存を含みます。各依存のライセンスは当該成果物の
+      JAR 内 LICENSE/NOTICE を併せて参照してください。
+
+-------------------------------------------------------------------------------
+3) H2 Database
+   - Maven: com.h2database:h2
+   - 取得元: Maven Central
+   - ライセンス: EPL 1.0 または MPL 2.0（デュアルライセンス）
+   - 本配布物での採用: **MPL 2.0 を選択**
+   - コピーライト: © 2004–2025 H2 Group and others
+   - URL: https://h2database.com
+
+   * ライセンス原文（選択）: licenses/mpl-2.0.txt
+   * 参考原文: licenses/epl-1.0.txt
+   * 追加注意: 本配布ではライブラリ本体の改変を行っていません。
+                改変を行う場合は各ライセンスの義務（変更部分のソース開示等）に従ってください。
+
+-------------------------------------------------------------------------------
+4) JavaFX Modules
+   - Maven: org.openjfx:javafx-controls / org.openjfx:javafx-fxml
+   - 取得元: Maven Central（JavaFX 21.0.5 系）
+   - ライセンス: GPLv2 with Classpath Exception
+   - コピーライト: © 2008–2025, Oracle and/or its affiliates and OpenJFX contributors
+   - URL: https://openjfx.io
+
+   * ライセンス原文: licenses/gpl-2.0-with-classpath-exception.txt
+   * 追加注意: Classpath 例外により、本アプリケーションは GPL を継承しません。
+                本配布では JavaFX 本体の改変を行っていません。
+
+-------------------------------------------------------------------------------
+5) OpenAI Java SDK
+   - Maven: com.openai:openai-java:4.6.1
+   - 取得元: Maven Central
+   - ライセンス: MIT License
+   - コピーライト: © OpenAI
+   - URL: https://github.com/openai/openai-java
+
+   * ライセンス原文: licenses/mit-openai-java.txt
+   * 追加注意: MIT に基づき、著作権表示およびライセンス文の保持が必要です。
+                別途、OpenAI API 利用規約・コンテンツポリシーの順守が必要です。
+
+-------------------------------------------------------------------------------
+6) Font Asset: Noto Sans CJK JP
+   - ファイル: NotoSansCJKjp-Regular.otf（ビルド時に取得）
+   - 取得元: Google Fonts
+   - ライセンス: SIL Open Font License 1.1 (OFL-1.1)
+   - コピーライト: © 2014–2025 Adobe (original authors), Google and contributors
+   - URL: https://fonts.google.com/noto
+
+   * ライセンス原文: licenses/ofl-1.1.txt
+   * 追加注意:
+       - フォント名を変更して配布しません（Reserved Font Name に配慮）。
+       - OFL に基づく再配布可。フォント単体の販売は不可ですが、
+         本アプリケーションへの同梱配布は許容されます。
+       - フォントに対する追加的な使用制限を課しません。
+
+-------------------------------------------------------------------------------
+一般注意事項
+- ここに記載の各商標は、各権利者に帰属します。
+- バージョンアップ等によりライセンス条件や二次依存が変更される可能性があります。
+  配布の都度、最新の LICENSE/NOTICE を確認してください。
+- 本ファイルは情報提供を目的としたものであり、法的助言を構成するものではありません。
+
+END OF THIRD-PARTY-NOTICES
