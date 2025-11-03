@@ -46,6 +46,102 @@ tasks.named('jar') {
     enabled = false
 }
 
+def operatingSystem = org.gradle.internal.os.OperatingSystem.current()
+def jpackageCommand = operatingSystem.isWindows() ? 'jpackage.exe' : 'jpackage'
+def jpackageOutputDir = layout.buildDirectory.dir('jpackage')
+def jpackageImageDir = jpackageOutputDir.map { it.dir('image') }
+def jpackageTempImageDir = layout.buildDirectory.dir('tmp/jpackage-image')
+def jpackageTempInstallerDir = layout.buildDirectory.dir('tmp/jpackage-exe')
+
+def appVersionProperty = (findProperty('appVersion') ?: version).toString()
+def appIconProperty = findProperty('appIcon') ?: findProperty('appIconPath')
+def jvmOptionProperty = findProperty('jpackageJvmOptions') ?: '-Xmx1G;-XX:+UseG1GC;-Djpackage.console=true'
+def resolvedJvmOptions = jvmOptionProperty
+        .toString()
+        .split(/[;,\s]+/)
+        .findAll { it }
+
+def configureJpackageCommand = { List<String> extraArgs, boolean includeMainJar ->
+    List<String> baseArgs = [
+            '--name', 'Dark Character Generator',
+            '--app-version', appVersionProperty
+    ]
+    if (includeMainJar) {
+        baseArgs += [
+                '--input', file("${buildDir}/libs").absolutePath,
+                '--main-jar', 'dark-character-generator.jar',
+                '--main-class', 'org.springframework.boot.loader.launch.JarLauncher'
+        ]
+    }
+    resolvedJvmOptions.each { option ->
+        baseArgs += ['--java-options', option]
+    }
+    if (appIconProperty) {
+        baseArgs += ['--icon', file(appIconProperty).absolutePath]
+    }
+    baseArgs + extraArgs
+}
+
+tasks.register('jpackageImage', Exec) {
+    group = 'distribution'
+    description = 'Builds a Windows app-image using jpackage.'
+    dependsOn tasks.named('bootJar')
+    onlyIf { operatingSystem.isWindows() }
+
+    doFirst {
+        def imageDir = jpackageImageDir.get().asFile
+        def tempDir = jpackageTempImageDir.get().asFile
+        delete(imageDir)
+        delete(tempDir)
+        imageDir.mkdirs()
+        tempDir.mkdirs()
+
+        List<String> args = configureJpackageCommand([
+                '--dest', imageDir.absolutePath,
+                '--temp', tempDir.absolutePath
+        ], true)
+        commandLine([jpackageCommand] + args)
+    }
+
+    doLast {
+        delete(jpackageTempImageDir.get().asFile)
+    }
+}
+
+tasks.register('jpackageExe', Exec) {
+    group = 'distribution'
+    description = 'Creates a Windows installer executable using jpackage.'
+    dependsOn tasks.named('jpackageImage')
+    onlyIf { operatingSystem.isWindows() }
+
+    doFirst {
+        def installerDir = jpackageOutputDir.get().asFile
+        def tempDir = jpackageTempInstallerDir.get().asFile
+        def imageDir = jpackageImageDir.get().asFile
+        delete(tempDir)
+        installerDir.mkdirs()
+        tempDir.mkdirs()
+
+        List<String> args = configureJpackageCommand([
+                '--type', 'exe',
+                '--dest', installerDir.absolutePath,
+                '--app-image', imageDir.absolutePath,
+                '--temp', tempDir.absolutePath
+        ], false)
+        commandLine([jpackageCommand] + args)
+    }
+
+    doLast {
+        delete(jpackageTempInstallerDir.get().asFile)
+    }
+}
+
+if (operatingSystem.isWindows()) {
+    tasks.named('build') {
+        dependsOn tasks.named('jpackageExe')
+    }
+}
+
 configurations.all {
     resolutionStrategy.eachDependency { details ->
         if (details.requested.group == 'org.openjfx' && details.requested.name.startsWith('javafx-')) {
