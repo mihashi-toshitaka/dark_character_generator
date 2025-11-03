@@ -1,7 +1,5 @@
 package com.example.darkchar.service.openai;
 
-import java.util.List;
-
 import org.springframework.stereotype.Component;
 
 import com.example.darkchar.domain.CharacterInput;
@@ -19,18 +17,14 @@ import com.example.darkchar.service.ai.ProviderGenerationResult;
 public class OpenAiCharacterGenerationProvider implements CharacterGenerationProvider {
 
     private final OpenAiCharacterGenerationClient generationClient;
-    private final OpenAiModelCatalogClient modelCatalogClient;
 
     /**
      * OpenAI 関連コンポーネントを注入します。
      *
      * @param generationClient SDK クライアント
-     * @param modelCatalogClient モデル一覧クライアント
      */
-    public OpenAiCharacterGenerationProvider(OpenAiCharacterGenerationClient generationClient,
-            OpenAiModelCatalogClient modelCatalogClient) {
+    public OpenAiCharacterGenerationProvider(OpenAiCharacterGenerationClient generationClient) {
         this.generationClient = generationClient;
-        this.modelCatalogClient = modelCatalogClient;
     }
 
     /**
@@ -76,19 +70,4 @@ public class OpenAiCharacterGenerationProvider implements CharacterGenerationPro
         return generationClient.generate(apiKey, modelId, input, selection);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean supportsModelListing() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<String> listAvailableModels(String apiKey) {
-        return modelCatalogClient.listModels(apiKey);
-    }
 }
