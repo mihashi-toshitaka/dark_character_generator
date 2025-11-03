@@ -46,7 +46,7 @@ public class PromptTemplateRenderer {
      */
     public String render(CharacterInput input, DarknessSelection selection) {
         Map<String, String> placeholders = Map.of(
-                "outputTokens", getOutputTokens(1000),
+                "outputTokens", getOutputTokens(5000),
                 "worldGenre", getWorldGenreName(input),
                 "characterAttributesSection", buildCharacterAttributesSection(input),
                 "traitFreeTextSection", buildTraitFreeTextSection(input),
