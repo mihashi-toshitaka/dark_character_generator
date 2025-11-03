@@ -15,10 +15,8 @@
     </HBox>
     <Label text="APIキー" style="-fx-font-size: 14px;" />
     <PasswordField fx:id="apiKeyField" promptText="sk-..." prefWidth="360" />
-    <HBox spacing="8" alignment="CENTER_LEFT">
-        <Button fx:id="loadModelsButton" text="モデル一覧を取得" onAction="#handleLoadModels" />
-        <ComboBox fx:id="modelComboBox" promptText="モデルを取得してください" prefWidth="220" />
-    </HBox>
+    <Label text="モデル" style="-fx-font-size: 14px;" />
+    <ComboBox fx:id="modelComboBox" promptText="モデルIDを入力または選択" prefWidth="360" editable="true" />
     <Label fx:id="statusLabel" text="APIキーは未設定です。" wrapText="true"
            style="-fx-text-fill: -fx-text-base-color;" />
     <Separator />

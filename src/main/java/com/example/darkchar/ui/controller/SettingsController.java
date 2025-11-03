@@ -12,14 +12,10 @@ import com.example.darkchar.service.ai.CharacterGenerationProvider;
 import com.example.darkchar.service.ai.CharacterGenerationStrategyRegistry;
 import com.example.darkchar.service.ai.GenerationModelCatalog;
 import com.example.darkchar.service.ai.ProviderType;
-import com.example.darkchar.ui.AppStyleUtil;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -51,9 +47,6 @@ public class SettingsController {
 
     @FXML
     private ComboBox<String> modelComboBox;
-
-    @FXML
-    private Button loadModelsButton;
 
     private Stage stage;
 
@@ -104,12 +97,9 @@ public class SettingsController {
 
         if (modelComboBox != null) {
             modelComboBox.setItems(FXCollections.observableArrayList());
+            modelComboBox.setEditable(true);
             modelComboBox.setDisable(true);
-            modelComboBox.setPromptText("モデルを取得してください");
-        }
-
-        if (loadModelsButton != null) {
-            loadModelsButton.setDisable(true);
+            modelComboBox.setPromptText("モデルIDを入力または選択");
         }
 
         refreshFromStore();
@@ -134,6 +124,8 @@ public class SettingsController {
             if (modelComboBox != null) {
                 modelComboBox.getItems().clear();
                 modelComboBox.setDisable(true);
+                modelComboBox.getSelectionModel().clearSelection();
+                modelComboBox.getEditor().clear();
             }
             updateStatus(providerDisplayName(providerType) + "の設定をクリアしました。");
             closeStage();
@@ -141,16 +133,15 @@ public class SettingsController {
         }
 
         if (modelCatalog.requiresModelSelection(providerType)) {
-            if (modelComboBox == null || modelComboBox.isDisabled() || modelComboBox.getItems().isEmpty()) {
-                updateStatus("モデル一覧を取得してから保存してください。");
-                return;
-            }
-            String selected = modelComboBox.getSelectionModel().getSelectedItem();
-            if (selected == null || selected.isBlank()) {
+            String selected = extractModelInput();
+            if (selected == null) {
                 updateStatus("使用するモデルを選択してください。");
                 return;
             }
             providerContextStore.setSelectedModel(providerType, selected);
+            if (modelComboBox != null && !modelComboBox.getItems().contains(selected)) {
+                modelComboBox.getItems().add(selected);
+            }
         } else {
             providerContextStore.setSelectedModel(providerType, null);
         }
@@ -185,46 +176,17 @@ public class SettingsController {
             apiKeyField.clear();
         }
         if (modelComboBox != null) {
-            modelComboBox.getItems().clear();
-            modelComboBox.setDisable(true);
+            if (modelCatalog.requiresModelSelection(providerType)) {
+                modelComboBox.getItems().setAll(modelCatalog.listModels(providerType));
+                modelComboBox.setDisable(false);
+            } else {
+                modelComboBox.getItems().clear();
+                modelComboBox.setDisable(true);
+            }
+            modelComboBox.getSelectionModel().clearSelection();
+            modelComboBox.getEditor().clear();
         }
         updateStatus(providerDisplayName(providerType) + "の設定をクリアしました。");
-    }
-
-    /**
-     * モデル取得ボタン押下時の処理を行います。
-     *
-     * @param event 発生したイベント
-     */
-    @FXML
-    void handleLoadModels(ActionEvent event) {
-        ProviderType providerType = getCurrentProviderType();
-        if (!modelCatalog.requiresModelSelection(providerType)) {
-            showWarning("このプロバイダではモデル一覧を取得できません。");
-            return;
-        }
-        loadModelsFromCatalog(providerType);
-    }
-
-    /**
-     * モデルカタログから利用可能なモデル一覧を読み込みます。
-     *
-     * @param providerType プロバイダ種別
-     */
-    private void loadModelsFromCatalog(ProviderType providerType) {
-        currentModels = new ArrayList<>(modelCatalog.listModels(providerType));
-        if (modelComboBox != null) {
-            modelComboBox.getItems().setAll(currentModels);
-            boolean hasModels = !currentModels.isEmpty();
-            modelComboBox.setDisable(!hasModels);
-            Optional<String> selected = providerContextStore.getSelectedModel(providerType);
-            if (selected.isPresent() && currentModels.contains(selected.get())) {
-                modelComboBox.getSelectionModel().select(selected.get());
-            } else {
-                modelComboBox.getSelectionModel().clearSelection();
-            }
-        }
-        updateStatus(currentModels.isEmpty() ? "利用可能なモデルが見つかりませんでした。" : "モデルを選択してください。");
     }
 
     /**
@@ -264,32 +226,34 @@ public class SettingsController {
             apiKeyField.setText(context.apiKey().orElse(""));
         }
         boolean requiresModels = modelCatalog.requiresModelSelection(providerType);
-        if (requiresModels) {
-            currentModels = new ArrayList<>(modelCatalog.listModels(providerType));
-        } else {
-            currentModels = new ArrayList<>();
+        currentModels = requiresModels ? new ArrayList<>(modelCatalog.listModels(providerType)) : new ArrayList<>();
+        if (!requiresModels) {
             providerContextStore.setSelectedModel(providerType, null);
         }
 
         if (modelComboBox != null) {
-            modelComboBox.getItems().setAll(currentModels);
+            modelComboBox.setEditable(true);
             if (requiresModels) {
-                boolean hasModels = !currentModels.isEmpty();
-                modelComboBox.setDisable(!hasModels);
+                modelComboBox.getItems().setAll(currentModels);
+                modelComboBox.setDisable(false);
                 Optional<String> selected = context.selectedModel();
-                if (selected.isPresent() && currentModels.contains(selected.get())) {
-                    modelComboBox.getSelectionModel().select(selected.get());
+                if (selected.isPresent()) {
+                    String selectedModel = selected.get();
+                    if (!modelComboBox.getItems().contains(selectedModel)) {
+                        modelComboBox.getItems().add(selectedModel);
+                    }
+                    modelComboBox.getSelectionModel().select(selectedModel);
+                    modelComboBox.getEditor().setText(selectedModel);
                 } else {
                     modelComboBox.getSelectionModel().clearSelection();
+                    modelComboBox.getEditor().clear();
                 }
             } else {
+                modelComboBox.getItems().clear();
                 modelComboBox.getSelectionModel().clearSelection();
+                modelComboBox.getEditor().clear();
                 modelComboBox.setDisable(true);
             }
-        }
-
-        if (loadModelsButton != null) {
-            loadModelsButton.setDisable(!requiresModels);
         }
 
         boolean hasKey = providerContextStore.hasApiKey(providerType);
@@ -338,17 +302,17 @@ public class SettingsController {
         }
     }
 
-    /**
-     * 警告ダイアログを表示します。
-     *
-     * @param message 表示メッセージ
-     */
-    private void showWarning(String message) {
-        Alert alert = new Alert(AlertType.WARNING);
-        alert.setHeaderText(null);
-        String content = (message == null || message.isBlank()) ? "モデル一覧の取得に失敗しました。" : message;
-        alert.setContentText(content);
-        AppStyleUtil.applyToAlert(alert);
-        alert.showAndWait();
+    private String extractModelInput() {
+        if (modelComboBox == null) {
+            return null;
+        }
+        String value = modelComboBox.getValue();
+        if (value == null || value.isBlank()) {
+            value = modelComboBox.isEditable() ? modelComboBox.getEditor().getText() : null;
+        }
+        if (value != null) {
+            value = value.trim();
+        }
+        return (value == null || value.isEmpty()) ? null : value;
     }
 }
