@@ -10,12 +10,12 @@ import java.util.stream.Stream;
  */
 public enum OpenAiGenerationModel {
 
-    GPT_4O("gpt-4o"),
-    GPT_4O_MINI("gpt-4o-mini"),
+    GPT_5("gpt-5"),
+    GPT_5_MINI("gpt-5-mini"),
+    GPT_5_NANO("gpt-5-nano"),
     GPT_4_1("gpt-4.1"),
-    GPT_4_1_MINI("gpt-4.1-mini"),
-    GPT_4O_2024_05_13("gpt-4o-2024-05-13"),
-    GPT_4O_MINI_2024_05_13("gpt-4o-mini-2024-05-13");
+    GPT_4O("gpt-4o"),
+    GPT_4O_MINI("gpt-4o-mini");
 
     private final String id;
 
