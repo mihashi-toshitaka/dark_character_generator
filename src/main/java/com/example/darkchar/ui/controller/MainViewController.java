@@ -170,6 +170,7 @@ public class MainViewController {
                 setText(empty || genre == null ? "" : genre.name());
             }
         });
+        worldGenreComboBox.setEditable(true);
         worldGenreComboBox.setConverter(new StringConverter<>() {
             @Override
             public String toString(WorldGenre object) {
@@ -178,10 +179,14 @@ public class MainViewController {
 
             @Override
             public WorldGenre fromString(String string) {
+                String trimmed = string == null ? "" : string.trim();
+                if (trimmed.isEmpty()) {
+                    return null;
+                }
                 return worldGenreComboBox.getItems().stream()
-                        .filter(genre -> genre.name().equals(string))
+                        .filter(genre -> genre.name().equals(trimmed))
                         .findFirst()
-                        .orElse(null);
+                        .orElseGet(() -> new WorldGenre(null, trimmed));
             }
         });
         if (!worldGenreComboBox.getItems().isEmpty()) {
