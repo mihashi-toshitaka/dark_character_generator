@@ -38,6 +38,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
@@ -146,7 +147,29 @@ public class MainViewController {
 
         setupDarknessSlider();
 
+        setupWorldGenreComboBox();
+
+        populateCharacterTraits();
+        populateDarknessOptions();
+        updateMode();
+    }
+
+    private void setupWorldGenreComboBox() {
         worldGenreComboBox.setItems(FXCollections.observableArrayList(attributeQueryService.loadWorldGenres()));
+        worldGenreComboBox.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(WorldGenre genre, boolean empty) {
+                super.updateItem(genre, empty);
+                setText(empty || genre == null ? "" : genre.name());
+            }
+        });
+        worldGenreComboBox.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(WorldGenre genre, boolean empty) {
+                super.updateItem(genre, empty);
+                setText(empty || genre == null ? "" : genre.name());
+            }
+        });
         worldGenreComboBox.setConverter(new StringConverter<>() {
             @Override
             public String toString(WorldGenre object) {
@@ -163,11 +186,9 @@ public class MainViewController {
         });
         if (!worldGenreComboBox.getItems().isEmpty()) {
             worldGenreComboBox.getSelectionModel().selectFirst();
+        } else {
+            worldGenreComboBox.getSelectionModel().clearSelection();
         }
-
-        populateCharacterTraits();
-        populateDarknessOptions();
-        updateMode();
     }
 
     private void setupProtagonistBiasSlider() {
