@@ -12,6 +12,7 @@ import com.example.darkchar.service.ai.CharacterGenerationProvider;
 import com.example.darkchar.service.ai.CharacterGenerationStrategyRegistry;
 import com.example.darkchar.service.ai.GenerationModelCatalog;
 import com.example.darkchar.service.ai.ProviderType;
+import com.example.darkchar.ui.JapaneseTextInputSupport;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -100,6 +101,7 @@ public class SettingsController {
             modelComboBox.setEditable(true);
             modelComboBox.setDisable(true);
             modelComboBox.setPromptText("モデルIDを入力または選択");
+            JapaneseTextInputSupport.enable(modelComboBox.getEditor());
         }
 
         refreshFromStore();
