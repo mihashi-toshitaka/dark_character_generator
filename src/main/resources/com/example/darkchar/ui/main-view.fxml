@@ -31,6 +31,7 @@
                         <ComboBox fx:id="worldGenreComboBox"
                                   prefWidth="320"
                                   promptText="世界観ジャンルを選択"
+                                  editable="true"
                                   HBox.hgrow="ALWAYS" />
                     </HBox>
                     <TitledPane text="闇堕ち前キャラクター属性（セミオート専用）" collapsible="false">
