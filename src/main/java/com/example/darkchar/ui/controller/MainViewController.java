@@ -26,6 +26,7 @@ import com.example.darkchar.service.GenerationResult;
 import com.example.darkchar.service.ai.AiProviderContextStore;
 import com.example.darkchar.service.ai.ProviderType;
 import com.example.darkchar.ui.AppStyleUtil;
+import com.example.darkchar.ui.JapaneseTextInputSupport;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -149,6 +150,9 @@ public class MainViewController {
 
         setupWorldGenreComboBox();
 
+        JapaneseTextInputSupport.enable(traitFreeTextArea);
+        JapaneseTextInputSupport.enable(freeTextArea);
+
         populateCharacterTraits();
         populateDarknessOptions();
         updateMode();
@@ -171,6 +175,7 @@ public class MainViewController {
             }
         });
         worldGenreComboBox.setEditable(true);
+        JapaneseTextInputSupport.enable(worldGenreComboBox.getEditor());
         worldGenreComboBox.setConverter(new StringConverter<>() {
             @Override
             public String toString(WorldGenre object) {
